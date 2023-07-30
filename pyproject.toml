@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "better_shiny"
+version = "0.1.0"
+description = ""
+authors = ["Niclas Haderer <niclas.haderer.dev@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.100.1"
+uvicorn = "^0.23.1"
+dominate = "^2.8.0"
+websockets = "^11.0.3"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
