@@ -10,6 +10,7 @@ fastapi = "^0.100.1"
 uvicorn = "^0.23.1"
 dominate = "^2.8.0"
 websockets = "^11.0.3"
+itsdangerous = "^2.1.2"
 
 [tool.poetry.dev-dependencies]
 

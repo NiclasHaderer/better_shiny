@@ -4,6 +4,9 @@ import os
 from dominate.tags import html_tag
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import HTMLResponse
+from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedError
 
@@ -13,17 +16,18 @@ from better_shiny.communication import BetterShinyRequests, BetterShinyRequestsT
 logger = logging.getLogger(__name__)
 
 
-class BetterShiny(FastAPI):
+class BetterShiny:
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        self.fast_api = FastAPI(*args, **kwargs)
         # Host static files
         parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         static_dir = os.path.join(parent_dir, "static")
-        self.mount("/static", StaticFiles(directory=static_dir), name="static")
+        self.fast_api.mount("/static", StaticFiles(directory=static_dir), name="static")
+        self.fast_api.add_middleware(SessionMiddleware, secret_key="!secret")
 
         # Register endpoint handler
         self.endpoint_collector = EndpointCollector()
-        self.add_api_websocket_route("/api/better-shiny-communication", self._register_endpoints)
+        self.fast_api.add_api_websocket_route("/api/better-shiny-communication", self._register_endpoints)
 
         from better_shiny._local_storage import local_storage
         local_data = local_storage()
@@ -31,7 +35,22 @@ class BetterShiny(FastAPI):
             raise RuntimeError("BetterShiny instance already exists in thread local storage. ")
         local_data.app = self
 
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        await self.fast_api(scope, receive, send)
+
+    def page(self, path: str):
+        def wrapper(fn):
+            return self.fast_api.get(path, response_class=HTMLResponse)(fn)
+
+        return wrapper
+
     async def _register_endpoints(self, websocket: WebSocket):
+        # get session cooke better_shiny_session
+        session_cookie = websocket.headers.get("cookie", "").split("better_shiny_session=")[-1].split(";")[0]
+        if not session_cookie:
+            await websocket.close(code=1003, reason="No session cookie found.")
+            return
+
         await websocket.accept()
 
         while True:
