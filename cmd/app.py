@@ -12,7 +12,8 @@ def reactive_html(default_val: str, some_other: int):
     value = reactive.Value(default_val)
 
     return div(
-        h1(value()),
+        h2(value(), some_other),
+
     )
 
 

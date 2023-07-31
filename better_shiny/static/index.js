@@ -13,20 +13,13 @@ window.onload = async () => {
                 break;
         }
     })
-    await populateInitialData();
-}
-
-
-const populateInitialData = async () => {
-    const client = await createClient();
-    const elementsToRenderOnTheServer = [...
-        document.querySelectorAll("[data-server-rendered='true']")
-    ]
-
-    for (const element of elementsToRenderOnTheServer) {
-        client.send({
-            type: 'rerender@request',
-            id: element.id,
-        })
-    }
+    client.onClose(() => {
+        console.log('Connection closed. Refresh to reconnect.')
+        setInterval(async () => {
+            const online = await client.serverOnline()
+            if (online) {
+                window.location.reload()
+            }
+        }, 300)
+    })
 }

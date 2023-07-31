@@ -24,6 +24,19 @@ const _createClient = async () => {
             return {
                 unsubscribe: () => socket.removeEventListener('message', onMessageWrapper)
             }
+        },
+        onClose: (callback) => {
+            const onCloseWrapper = (event) => {
+                callback(event);
+            }
+
+            socket.addEventListener('close', onCloseWrapper)
+            return {
+                unsubscribe: () => socket.removeEventListener('close', onCloseWrapper)
+            }
+        },
+        serverOnline: async () => {
+            return fetch('/api/better-shiny-communication/online').then(() => true).catch(() => false)
         }
     }
     _client.onerror = e => console.error(e);

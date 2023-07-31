@@ -26,17 +26,18 @@ def dynamic():
         if not api or not isinstance(api, BetterShiny):
             raise RuntimeError("No BetterShiny instance found in thread local storage. ")
 
-        def inner(*args, **kwargs) -> html_tag:
+        def inner_function_executor_0_0_(*args, **kwargs) -> html_tag:
             # TODO Get the current session id and save the endpoint with the associated id
 
             outlet = div(id=route_id)
             with outlet:
                 attr(style="display: contents;", data_server_rendered="true")
+                fn(*args, **kwargs)
 
             return outlet
 
         api.endpoint_collector.add(route_id, _route_wrapper(fn))
 
-        return inner
+        return inner_function_executor_0_0_
 
     return wrapper

@@ -8,7 +8,6 @@ from dominate.tags import html_tag
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import HTMLResponse
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedError
@@ -35,6 +34,7 @@ class BetterShiny:
         # Register endpoint handler
         self.endpoint_collector = EndpointCollector()
         self.fast_api.add_api_websocket_route("/api/better-shiny-communication", self._register_endpoints)
+        self.fast_api.get("/api/better-shiny-communication/online")(self._online_check)
 
         from better_shiny._local_storage import local_storage
         local_data = local_storage()
@@ -53,6 +53,10 @@ class BetterShiny:
             return self.fast_api.get(path, response_class=DominatorResponse)(fn)
 
         return wrapper
+
+    @staticmethod
+    def _online_check():
+        return True
 
     async def _register_endpoints(self, websocket: WebSocket):
         # get session cooke better_shiny_session
@@ -85,7 +89,8 @@ class BetterShiny:
                 # Delegate the client request to the correct endpoint
                 await self._delegate_to_endpoint(parsed_data, websocket)
             except Exception as e:
-                logger.error("Server error:", e)
+                logger.error("Server error:")
+                logger.exception(e)
 
     async def _delegate_to_endpoint(self, parsed_data: BetterShinyRequestsType, websocket: WebSocket):
         # switch between the different types of parsed_data

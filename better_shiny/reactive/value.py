@@ -6,6 +6,22 @@ class Value:
 
     def __init__(self, value):
         self._value = value
+        self._assert_correct_call_site()
+
+    @staticmethod
+    def _assert_correct_call_site() -> None:
+        """
+        This makes sure that the value constructor is only called in a function that is decorated with @dynamic
+        """
+        import inspect
+
+        # We know that the call site is 3 frames up the stack
+        frame = inspect.currentframe().f_back.f_back.f_back
+        # Check that the name is inner_function_executor_0_0_
+        if frame.f_code.co_name != "inner_function_executor_0_0_":
+            raise ValueError(
+                "Value constructor can only be called in a function that is decorated with @dynamic"
+            )
 
     def __call__(self):
         return self._value
