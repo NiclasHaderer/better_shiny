@@ -1,5 +1,7 @@
 import logging
 import os
+import random
+from pathlib import Path
 
 from dominate.tags import html_tag
 from fastapi import FastAPI, WebSocket
@@ -20,10 +22,10 @@ class BetterShiny:
     def __init__(self, *args, **kwargs):
         self.fast_api = FastAPI(*args, **kwargs)
         # Host static files
-        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        static_dir = os.path.join(parent_dir, "static")
-        self.fast_api.mount("/static", StaticFiles(directory=static_dir), name="static")
-        self.fast_api.add_middleware(SessionMiddleware, secret_key="!secret")
+        static_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/static"
+        self.serve_static_files(static_dir)
+
+        self.fast_api.add_middleware(SessionMiddleware, secret_key=random.randbytes(64))
 
         # Register endpoint handler
         self.endpoint_collector = EndpointCollector()
@@ -37,6 +39,9 @@ class BetterShiny:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         await self.fast_api(scope, receive, send)
+
+    def serve_static_files(self, folder_path: str | Path, route: str = "/static"):
+        self.fast_api.mount(route, StaticFiles(directory=folder_path))
 
     def page(self, path: str):
         def wrapper(fn):
