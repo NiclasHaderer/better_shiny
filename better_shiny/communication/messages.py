@@ -23,6 +23,7 @@ class BetterShinyRequests(RootModel):
 
 class ResponseReRender(BaseModel):
     type: Literal["rerender@response"]
+    id: str
     html: str
 
 
