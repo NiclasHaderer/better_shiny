@@ -1,1 +1,1 @@
-from .app import BetterShiny
+from .better_shiny import BetterShiny

@@ -2,6 +2,7 @@ import logging
 import os
 import random
 from pathlib import Path
+from typing import Callable
 
 from dominate.tags import html_tag
 from fastapi import FastAPI, WebSocket
@@ -12,6 +13,8 @@ from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedError
 
+from better_shiny.app.dominator_response import DominatorResponse
+from better_shiny.app.session_middleware import UniqueSessionMiddleware
 from better_shiny.communication import BetterShinyRequests, BetterShinyRequestsType, RequestReRender, ResponseError, \
     EndpointCollector, ResponseReRender
 
@@ -25,7 +28,9 @@ class BetterShiny:
         static_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/static"
         self.serve_static_files(static_dir)
 
+        # Add middlewares
         self.fast_api.add_middleware(SessionMiddleware, secret_key=random.randbytes(64))
+        self.fast_api.add_middleware(UniqueSessionMiddleware)
 
         # Register endpoint handler
         self.endpoint_collector = EndpointCollector()
@@ -44,8 +49,8 @@ class BetterShiny:
         self.fast_api.mount(route, StaticFiles(directory=folder_path))
 
     def page(self, path: str):
-        def wrapper(fn):
-            return self.fast_api.get(path, response_class=HTMLResponse)(fn)
+        def wrapper(fn: Callable[..., html_tag]):
+            return self.fast_api.get(path, response_class=DominatorResponse)(fn)
 
         return wrapper
 

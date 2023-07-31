@@ -33,6 +33,7 @@ class Endpoint:
     def _cleanup_manager(self):
         # Start a thread that runs the function self._cleanup every 10 seconds
         thread = threading.Thread(target=self._cleanup, args=())
+        thread.daemon = True
         thread.start()
 
     def _cleanup(self):
