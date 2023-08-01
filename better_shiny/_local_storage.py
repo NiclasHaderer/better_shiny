@@ -1,18 +1,15 @@
-import threading
-from dataclasses import dataclass
-
-from better_shiny.app import BetterShiny
-
-
-@dataclass
 class LocalStorage:
-    app: BetterShiny | None
-    active_request: str | None = None
+    def __init__(self):
+        from better_shiny.app import BetterShiny
+        self.app: BetterShiny | None = None
+        self.active_request: str | None = None
 
 
-_thread_local = threading.local()
-_thread_local.value = LocalStorage(app=None, active_request=None)
+_local_storage: LocalStorage | None = None
 
 
 def local_storage() -> LocalStorage:
-    return _thread_local.value
+    global _local_storage
+    if not _local_storage:
+        _local_storage = LocalStorage()
+    return _local_storage

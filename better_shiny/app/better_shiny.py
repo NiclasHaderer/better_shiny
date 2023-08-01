@@ -1,5 +1,4 @@
 import functools
-import logging
 import os
 import random
 import uuid
@@ -14,11 +13,13 @@ from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedError
 
+from better_shiny._local_storage import local_storage
+from better_shiny._utils import create_logger
 from better_shiny.app.dominator_response import DominatorResponse
 from better_shiny.communication import BetterShinyRequests, BetterShinyRequestsType, RequestReRender, ResponseError, \
     EndpointCollector, ResponseReRender
 
-logger = logging.getLogger(__name__)
+logger = create_logger(__name__)
 
 
 class BetterShiny:
@@ -36,7 +37,6 @@ class BetterShiny:
         self.fast_api.add_api_websocket_route("/api/better-shiny-communication", self._register_endpoints)
         self.fast_api.get("/api/better-shiny-communication/online")(self._online_check)
 
-        from better_shiny._local_storage import local_storage
         local_data = local_storage()
         if local_data.app:
             raise RuntimeError("BetterShiny instance already exists in thread local storage. ")
@@ -52,11 +52,14 @@ class BetterShiny:
         def wrapper(fn: Callable[..., html_tag]):
             @functools.wraps(fn)
             def new_call(*args, **kwargs):
-                print("New call", "setting active request")
-                request_id = str(uuid.uuid4())
+                session_id = str(uuid.uuid4())
+                local_storage().active_request = session_id
+                logger.info(f"Request {session_id} started")
                 html = fn(*args, **kwargs)
+                logger.info(f"Request {session_id} ended")
+                local_storage().active_request = None
                 response = DominatorResponse(html)
-                response.set_cookie("better_shiny_request_id", request_id, httponly=True, samesite="strict")
+                response.set_cookie("better_shiny_session_id", session_id, httponly=True, samesite="strict")
                 return response
 
             return self.fast_api.get(path, response_class=DominatorResponse)(new_call)
@@ -117,9 +120,9 @@ class BetterShiny:
                 )
 
     async def _handle_re_render_request(self, parsed_data: RequestReRender, websocket: WebSocket):
-        # TODO
-        # html = self.endpoint_collector.get(parsed_data.id)
-        html = html_tag("Hello world", websocket.session)
+        endpoint = self.endpoint_collector.get(parsed_data.id)
+        session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
+        html = endpoint.call_instance(session_id)
         assert isinstance(html, html_tag)
         html = html.render()
         await websocket.send_json(

@@ -1,5 +1,8 @@
+import threading
+import time
+
 from dominate.tags import *
-from fastapi import Request
+
 from better_shiny import reactive
 from better_shiny.app import BetterShiny
 from better_shiny.reactive import dynamic
@@ -32,6 +35,34 @@ def reactive_html(default_val: str):
     )
 
 
+@dynamic()
+def counter():
+    count = reactive.Value(0)
+
+    @reactive.on_mount()
+    def on_mount():
+        stop_counting = False
+
+        def increment():
+            while not stop_counting:
+                time.sleep(1)
+                count.set(count() + 1)
+
+        thread = threading.Thread(target=increment, daemon=True)
+        thread.start()
+
+        def tear_down():
+            nonlocal stop_counting
+            stop_counting = True
+            thread.join()
+
+        return tear_down
+
+    return div(
+        "Count: ", count(),
+    )
+
+
 @dynamic(lazy=True)
 def lazy_reactive_html():
     return div(
@@ -40,13 +71,13 @@ def lazy_reactive_html():
 
 
 @app.page("/")
-def home(request: Request):
-    print("Request", request)
+def home():
     root = div(id="root")
     with root:
         with div():
             reactive_html("This is the title of my website")
             lazy_reactive_html()
+            counter()
 
     h = head()
     with h:

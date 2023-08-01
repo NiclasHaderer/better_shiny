@@ -9,25 +9,19 @@ from ..app import BetterShiny
 T = TypeVar("T", bound=Callable[..., html_tag])
 
 
-def _route_wrapper(fun: Callable) -> Callable:
-    def _answer(args: tuple, kwargs: dict):
-        return div("No longer loading...")
-
-    return _answer
-
-
 def dynamic(lazy: bool = False):
-    # TODO: Give each decorated function a unique id and register it.
     def wrapper(fn: T) -> T:
         route_id = str(id(fn))
         local = local_storage()
         api = local.app
+        endpoint = api.endpoint_collector.add(route_id, fn)
 
         if not api or not isinstance(api, BetterShiny):
             raise RuntimeError("No BetterShiny instance found in thread local storage. ")
 
-        def inner_function_executor_0_0_(*args, **kwargs) -> html_tag:
-            # TODO Get the current session id and save the endpoint with the associated id
+        def inner(*args, **kwargs) -> html_tag:
+            # Add the endpoint instance to the endpoint
+            endpoint.add_instance(local.active_request, args, kwargs)
 
             outlet = div(id=route_id)
             with outlet:
@@ -39,8 +33,6 @@ def dynamic(lazy: bool = False):
 
             return outlet
 
-        api.endpoint_collector.add(route_id, _route_wrapper(fn))
-
-        return inner_function_executor_0_0_
+        return inner
 
     return wrapper
