@@ -1,17 +1,7 @@
 import typing
 
 import dominate.tags
-from fastapi.encoders import ENCODERS_BY_TYPE
 from starlette.responses import HTMLResponse
-
-# find all classes inside dominate.tags, which extend the html_tag class
-dominate_tags = [dominate.document]
-for name, obj in dominate.tags.__dict__.items():
-    if isinstance(obj, type) and issubclass(obj, dominate.tags.html_tag):
-        dominate_tags.append(obj)
-
-for tag in dominate_tags:
-    ENCODERS_BY_TYPE[tag] = lambda x: x
 
 
 class DominatorResponse(HTMLResponse):

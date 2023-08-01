@@ -1,5 +1,5 @@
 from dominate.tags import *
-
+from fastapi import Request
 from better_shiny import reactive
 from better_shiny.app import BetterShiny
 from better_shiny.reactive import dynamic
@@ -40,7 +40,8 @@ def lazy_reactive_html():
 
 
 @app.page("/")
-def home():
+def home(request: Request):
+    print("Request", request)
     root = div(id="root")
     with root:
         with div():

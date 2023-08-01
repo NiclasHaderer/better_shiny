@@ -1,6 +1,8 @@
+import functools
 import logging
 import os
 import random
+import uuid
 from pathlib import Path
 from typing import Callable
 
@@ -13,7 +15,6 @@ from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedError
 
 from better_shiny.app.dominator_response import DominatorResponse
-from better_shiny.app.session_middleware import UniqueSessionMiddleware
 from better_shiny.communication import BetterShinyRequests, BetterShinyRequestsType, RequestReRender, ResponseError, \
     EndpointCollector, ResponseReRender
 
@@ -29,7 +30,6 @@ class BetterShiny:
 
         # Add middlewares
         self.fast_api.add_middleware(SessionMiddleware, secret_key=random.randbytes(64))
-        self.fast_api.add_middleware(UniqueSessionMiddleware)
 
         # Register endpoint handler
         self.endpoint_collector = EndpointCollector()
@@ -50,7 +50,16 @@ class BetterShiny:
 
     def page(self, path: str):
         def wrapper(fn: Callable[..., html_tag]):
-            return self.fast_api.get(path, response_class=DominatorResponse)(fn)
+            @functools.wraps(fn)
+            def new_call(*args, **kwargs):
+                print("New call", "setting active request")
+                request_id = str(uuid.uuid4())
+                html = fn(*args, **kwargs)
+                response = DominatorResponse(html)
+                response.set_cookie("better_shiny_request_id", request_id, httponly=True, samesite="strict")
+                return response
+
+            return self.fast_api.get(path, response_class=DominatorResponse)(new_call)
 
         return wrapper
 

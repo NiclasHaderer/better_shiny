@@ -1,5 +1,6 @@
 import {createClient} from "./client.js";
 import {errorResponseHandler, rerenderHandler} from "./message-handlers.js";
+import {retryEvery} from "./utils.js";
 
 window.onload = async () => {
     const client = await createClient();
@@ -14,14 +15,15 @@ window.onload = async () => {
         }
     })
     client.onClose(() => {
-        console.log('Connection closed. Refresh to reconnect.')
-        setInterval(async () => {
-            const online = await client.serverOnline()
-            if (online) {
-                window.location.reload()
-            }
+        retryEvery(async () => {
+            return client.serverOnline().then(online => {
+                if (online) window.location.reload()
+                return online
+            })
         }, 300)
     })
+
+    void populateLazyData()
 }
 
 
