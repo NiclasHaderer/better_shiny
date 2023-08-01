@@ -16,7 +16,7 @@ def _route_wrapper(fun: Callable) -> Callable:
     return _answer
 
 
-def dynamic():
+def dynamic(lazy: bool = False):
     # TODO: Give each decorated function a unique id and register it.
     def wrapper(fn: T) -> T:
         route_id = str(id(fn))
@@ -32,7 +32,10 @@ def dynamic():
             outlet = div(id=route_id)
             with outlet:
                 attr(style="display: contents;", data_server_rendered="true")
-                fn(*args, **kwargs)
+                if lazy:
+                    attr(data_lazy="true")
+                else:
+                    fn(*args, **kwargs)
 
             return outlet
 
