@@ -1,7 +1,7 @@
 import base64
 import io
 
-from dominate.tags import html_tag, img
+from dominate.tags import img
 from matplotlib import pyplot
 
 
@@ -31,7 +31,7 @@ def _plt_to_data_uri(plt: pyplot, dpi: int) -> str:
     return data_uri
 
 
-def matplot(
+def matplot_element(
         plt: pyplot, dpi: int = None,
 ) -> img:
     """

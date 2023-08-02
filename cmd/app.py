@@ -1,13 +1,15 @@
+import os
 import threading
 import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from dominate.tags import *
 
 from better_shiny import reactive
 from better_shiny.app import BetterShiny
-from better_shiny.elements import matplot
+from better_shiny.elements import matplot_element, pandas_element
 from better_shiny.reactive import dynamic
 
 app = BetterShiny()
@@ -66,7 +68,16 @@ def plot():
     plt.ylabel('Y-axis')
     plt.title('Random Scatter Plot')
     #
-    return matplot(plt)
+    return matplot_element(plt)
+
+
+@dynamic(lazy=True)
+def dataframe():
+    parent_folder = os.path.dirname(os.path.dirname(__file__))
+    dataframe_folder = os.path.join(parent_folder, "dataframes")
+    dataframe_path = os.path.join(dataframe_folder, "cereal.csv")
+    df = pd.read_csv(dataframe_path)
+    return pandas_element(df.head(10))
 
 
 @app.page("/")
@@ -78,6 +89,7 @@ def home():
             counter()
             counter(1)
             plot()
+            dataframe()
 
     h = head()
     with h:
