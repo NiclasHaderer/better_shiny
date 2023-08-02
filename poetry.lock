@@ -732,6 +732,24 @@ files = [
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
+name = "pydantic-to-typescript"
+version = "1.0.10"
+description = "Convert pydantic models to typescript interfaces"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pydantic-to-typescript-1.0.10.tar.gz", hash = "sha256:c0d030f213b9b225381fc59a5ad7544a0e20bfb6856323f324fd3cf73e4fd447"},
+    {file = "pydantic_to_typescript-1.0.10-py3-none-any.whl", hash = "sha256:b2b3954fd4aa55f367aa0513ee3c21cd327221936c0cfbeb8d46b51542eceea7"},
+]
+
+[package.dependencies]
+pydantic = "*"
+
+[package.extras]
+dev = ["coverage", "pytest", "pytest-cov"]
+
+[[package]]
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
@@ -945,4 +963,4 @@ data = ["matplotlib", "numpy", "pandas"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d4d9beea7f4a84bcf4c0da7ada946d5e4e62661ee5c8bcfcf1e70c31c299cfcf"
+content-hash = "997cfa57cf029317b4081dd834eea8dc73d54106ff10f680c46c39544b696c80"

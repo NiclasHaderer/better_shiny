@@ -72,7 +72,7 @@ class BetterShiny:
 
     async def _register_endpoints(self, websocket: WebSocket):
         # get session cooke better_shiny_session
-        session_cookie = websocket.headers.get("cookie", "").split("better_shiny_session=")[-1].split(";")[0]
+        session_cookie = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
         if not session_cookie:
             await websocket.close(code=1003, reason="No session cookie found.")
             return

@@ -44,6 +44,6 @@ class DominatorResponse(HTMLResponse):
             # Add mandatory tags
             meta(charset='UTF-8')
             meta(name='viewport', content='width=device-width, initial-scale=1')
-            script(src='/static/index.js', type="module")
+            script(src='/static/better-shiny.js', type="module")
 
         return super().render(doc.render())

@@ -1,6 +1,6 @@
-import {createClient} from "./client.js";
-import {errorResponseHandler, rerenderHandler} from "./message-handlers.js";
-import {retryEvery} from "./utils.js";
+import {createClient} from "./client";
+import {errorResponseHandler, rerenderHandler} from "./message-handlers";
+import {retryEvery} from "./utils";
 
 window.onload = async () => {
     const client = await createClient();
