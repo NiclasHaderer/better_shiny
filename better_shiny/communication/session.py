@@ -1,4 +1,5 @@
 import asyncio
+import time
 from typing import Dict, Callable
 
 from dominate.tags import html_tag
@@ -17,10 +18,19 @@ class Session:
         self.websocket: WebSocket | None = None
         self._dynamic_functions: Dict[DynamicFunctionId, DynamicFunction] = {}
         self._local_storage = local_storage()
+        self._startup_time = time.time()
 
     @property
     def is_active(self) -> bool:
-        return self.websocket is not None and self.websocket.client_state == WebSocketState.CONNECTED
+        """
+        The session is active if the websocket is connected or the startup time is less than 60 seconds ago
+        :return:
+        """
+        return (
+            self.websocket is not None
+            and self.websocket.client_state == WebSocketState.CONNECTED
+            and (time.time() - self._startup_time < 60)
+        )
 
     def destroy(self) -> None:
         for instance in self._dynamic_functions.values():
@@ -51,7 +61,10 @@ class Session:
     def rerender_on_change(self, dynamic_function_id: DynamicFunctionId, value: Value) -> None:
         app = self._local_storage.app
 
-        def cb(_: Value) -> None:
+        def invoke_rerender(_: Value) -> None:
+            if not self.is_active or self.websocket is None:
+                return
+
             # noinspection PyProtectedMember
             asyncio.run(
                 app._rerender_component(
@@ -61,10 +74,9 @@ class Session:
                 )
             )
 
-        value.on_update(cb)
+        dynamic_function = self.get_dynamic_function(dynamic_function_id)
+        dynamic_function.listen_for_changes(value, invoke_rerender)
 
     def __call__(self, dynamic_function_id: DynamicFunctionId) -> html_tag:
         self._local_storage.active_session_id = self.session_id
-        result = self.get_dynamic_function(dynamic_function_id)()
-        self._local_storage.active_session_id = None
-        return result
+        return self.get_dynamic_function(dynamic_function_id)()

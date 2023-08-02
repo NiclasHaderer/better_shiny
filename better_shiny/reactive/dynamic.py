@@ -35,6 +35,8 @@ def dynamic(lazy: bool = False) -> Callable[[T], T]:
 
             return outlet
 
+        # Mark the function as dynamic, that way we can check if a function is decorated with @dynamic
+        inner.is_dynamic_function = True
         return inner
 
     return wrapper

@@ -1,6 +1,4 @@
 import os
-import threading
-import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,33 +9,23 @@ from better_shiny import reactive
 from better_shiny.app import BetterShiny
 from better_shiny.elements import matplot_element, pandas_element
 from better_shiny.reactive import dynamic
+from better_shiny.utils import RepeatTimer
 
 app = BetterShiny()
 
 
 @dynamic()
 def counter(start=0):
-    count = reactive.Value(start)
-    double_count = reactive.Value(start * 2)
+    count = reactive.Value(start, "count")
+    double_count = reactive.Value(start * 2, "double")
 
     @reactive.on_mount()
     def on_mount():
-        stop_counting = False
+        def increase():
+            count.set(count.value_non_reactive + 1)
 
-        def increment():
-            while not stop_counting:
-                time.sleep(1)
-                count.set(count.value_non_reactive + 1)
-
-        thread = threading.Thread(target=increment, daemon=True)
-        thread.start()
-
-        def tear_down():
-            nonlocal stop_counting
-            stop_counting = True
-            thread.join()
-
-        return tear_down
+        timer = RepeatTimer(1, increase)
+        timer.start()
 
     @reactive.on_update(count)
     def on_count_change(_):
@@ -85,20 +73,20 @@ def home():
     root = div(id="root")
     with root:
         with div():
-            # h1("Lazy Reactive")
-            # lazy_reactive_html()
-            # hr()
-            # h1("Counter with 0")
-            # counter()
-            # hr()
-            # h1("Counter with 1")
+            h1("Lazy Reactive")
+            lazy_reactive_html()
+            hr()
+            h1("Counter with 0")
+            counter()
+            hr()
+            h1("Counter with 1")
             counter(1)
-            # hr()
-            # h1("Plot")
-            # plot()
-            # hr()
-            # h1("Dataframe")
-            # dataframe()
+            hr()
+            h1("Plot")
+            plot()
+            hr()
+            h1("Dataframe")
+            dataframe()
 
     h = head()
     with h:

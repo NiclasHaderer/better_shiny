@@ -1,4 +1,4 @@
-from typing import Callable, Any
+from typing import Callable, Any, Dict, Set, List
 
 from dominate.tags import html_tag
 
@@ -6,6 +6,7 @@ from .._local_storage import local_storage
 from ..reactive import Value
 
 DynamicFunctionId = str
+LineNr = int
 
 
 class DynamicFunction:
@@ -23,9 +24,13 @@ class DynamicFunction:
         self._dynamic_function_id = dynamic_function_id
 
         # Lifecycle hooks
-        self._on_mount: list[Callable[[], Any]] = []
-        self._on_unmount: list[Callable[[], Any]] = []
+        self._on_mount: List[Callable[[], Any]] = []
+        self._on_unmount: List[Callable[[], Any]] = []
         self._first_call = True
+
+        # Stable values
+        self._values: Dict[LineNr, Value] = {}
+        self._values_to_listen_for_changes: Set[Value] = set()
 
         # Local storage
         self._local_storage = local_storage()
@@ -40,15 +45,37 @@ class DynamicFunction:
         self._first_call = False
         return result
 
+    @property
+    def is_first_call(self) -> bool:
+        return self._first_call
+
     def destroy(self) -> None:
         for fn in self._on_unmount:
             fn()
+
+        for value in self._values.values():
+            value.destroy()
         # TODO call the destroy method of
         #  1. child dynamic functions
-        #  2. reactive values -> removes all subscribers on the value_change event
 
     def on_mount(self, fn: Callable[[], Any]) -> None:
         self._on_mount.append(fn)
 
     def on_unmount(self, fn: Callable[[], Any]) -> None:
         self._on_unmount.append(fn)
+
+    def add_value(self, call_line, value: Value) -> None:
+        self._values[call_line] = value
+
+    def has_value(self, call_line) -> bool:
+        return call_line in self._values
+
+    def get_value(self, call_line) -> Value:
+        return self._values[call_line]
+
+    def listen_for_changes(self, value: Value, invoke_rerender: Callable[[Value], None]) -> None:
+        if value in self._values_to_listen_for_changes:
+            return
+
+        value.on_update(invoke_rerender)
+        self._values_to_listen_for_changes.add(value)

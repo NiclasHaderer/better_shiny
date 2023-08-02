@@ -16,7 +16,8 @@ def on_mount() -> Callable[[Callable[[], None]], Callable[[], None]]:
             fn()
 
         dynamic_function = local.active_dynamic_function()
-        dynamic_function.on_mount(inner)
+        if dynamic_function.is_first_call:
+            dynamic_function.on_mount(inner)
 
         return inner
 
@@ -32,6 +33,10 @@ def on_unmount() -> Callable[[Callable[[], None]], Callable[[], None]]:
     def wrapper(fn: Callable[[], None]) -> Callable[[], None]:
         def inner() -> None:
             fn()
+
+        dynamic_function = local_storage().active_dynamic_function()
+        if dynamic_function.is_first_call:
+            dynamic_function.on_unmount(inner)
 
         return inner
 

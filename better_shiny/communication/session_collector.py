@@ -9,7 +9,9 @@ from ..utils import RepeatTimer
 class SessionCollector:
     def __init__(self):
         self._sessions: Dict[SessionId, Session] = {}
-        RepeatTimer(60, self._remove_unused_sessions).start()
+        timer = RepeatTimer(60, self._remove_unused_sessions)
+        timer.daemon = True
+        timer.start()
 
     def _remove_unused_sessions(self) -> None:
         for session_id, session in list(self._sessions.items()):
