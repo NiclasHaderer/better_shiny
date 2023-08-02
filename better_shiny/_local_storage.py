@@ -6,13 +6,16 @@ class LocalStorage:
         self.active_session_id: str | None = None
         self.active_dynamic_function_id: str | None = None
 
-    def get_endpoint(self):
-        self.app.endpoint_collector.get(self.active_dynamic_function_id)
+    def active_session(self):
+        if not self.active_session_id:
+            raise RuntimeError("No active session.")
 
-    def get_endpoint_instance(self):
-        return self.app.endpoint_collector.get(
-            self.active_dynamic_function_id
-        ).get_instance(self.active_session_id)
+        self.app.endpoint_collector.get(self.active_session_id)
+
+    def active_dynamic_function(self):
+        if not self.active_dynamic_function_id:
+            raise RuntimeError("No active dynamic function.")
+        return self.active_session().get_dynamic_function(self.active_dynamic_function_id)
 
 
 _local_storage: LocalStorage | None = None

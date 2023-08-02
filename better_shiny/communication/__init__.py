@@ -1,2 +1,2 @@
-from .endpoint_collector import EndpointCollector
+from .session_collector import SessionCollector
 from .messages import *

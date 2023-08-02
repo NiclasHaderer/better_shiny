@@ -1,7 +1,7 @@
 from typing import Callable
 
 from .._local_storage import local_storage
-from ..communication.endpoint_collector import Endpoint, EndpointInstance
+from ..communication.session_collector import Session, EndpointInstance
 
 
 def on_mount():
@@ -15,8 +15,8 @@ def on_mount():
         def inner():
             fn()
 
-        endpoint: EndpointInstance = local.get_endpoint_instance()
-        endpoint.add_on_mount(inner)
+        endpoint: EndpointInstance = local.active_dynamic_function()
+        endpoint.on_mount(inner)
 
         return inner
 

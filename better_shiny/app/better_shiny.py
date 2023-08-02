@@ -21,7 +21,7 @@ from ..communication import (
     BetterShinyRequestsType,
     RequestReRender,
     ResponseError,
-    EndpointCollector,
+    SessionCollector,
     ResponseReRender,
 )
 
@@ -32,26 +32,20 @@ class BetterShiny:
     def __init__(self, *args, **kwargs):
         self.fast_api = FastAPI(*args, **kwargs)
         # Host static files
-        static_dir = (
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/static"
-        )
+        static_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/static"
         self.serve_static_files(static_dir)
 
         # Add middlewares
         self.fast_api.add_middleware(SessionMiddleware, secret_key=random.randbytes(64))
 
         # Register endpoint handler
-        self.endpoint_collector = EndpointCollector()
-        self.fast_api.add_api_websocket_route(
-            "/api/better-shiny-communication", self._register_endpoints
-        )
+        self.endpoint_collector = SessionCollector()
+        self.fast_api.add_api_websocket_route("/api/better-shiny-communication", self._register_endpoints)
         self.fast_api.get("/api/better-shiny-communication/online")(self._online_check)
 
         self._local_storage = local_storage()
         if self._local_storage.app:
-            raise RuntimeError(
-                "BetterShiny instance already exists in thread local storage. "
-            )
+            raise RuntimeError("BetterShiny instance already exists in thread local storage. ")
         self._local_storage.app = self
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
@@ -89,11 +83,7 @@ class BetterShiny:
 
     async def _register_endpoints(self, websocket: WebSocket):
         # get session cooke better_shiny_session
-        session_cookie = (
-            websocket.headers.get("cookie", "")
-            .split("better_shiny_session_id=")[-1]
-            .split(";")[0]
-        )
+        session_cookie = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
         if not session_cookie:
             await websocket.close(code=1003, reason="No session cookie found.")
             return
@@ -106,20 +96,14 @@ class BetterShiny:
             try:
                 # Get the data from the client
                 json_data = await websocket.receive_json()
-                parsed_data: BetterShinyRequestsType = BetterShinyRequests(
-                    **json_data
-                ).root
+                parsed_data: BetterShinyRequestsType = BetterShinyRequests(**json_data).root
             except (WebSocketDisconnect, ConnectionClosedError):
                 # Connection closed, so we can stop the loop
                 break
             except Exception as e:
                 # Client sent invalid data
                 logger.warning("Client error:", e)
-                await websocket.send_json(
-                    ResponseError(
-                        type="error@response", error=f"Error: {e}"
-                    ).model_dump()
-                )
+                await websocket.send_json(ResponseError(type="error@response", error=f"Error: {e}").model_dump())
                 continue
             try:
                 # Delegate the client request to the correct endpoint
@@ -128,9 +112,7 @@ class BetterShiny:
                 logger.error("Server error:")
                 logger.exception(e)
 
-    async def _delegate_to_endpoint(
-        self, parsed_data: BetterShinyRequestsType, websocket: WebSocket
-    ):
+    async def _delegate_to_endpoint(self, parsed_data: BetterShinyRequestsType, websocket: WebSocket):
         # switch between the different types of parsed_data
         match parsed_data:
             case RequestReRender():
@@ -145,19 +127,11 @@ class BetterShiny:
                     ).model_dump()
                 )
 
-    async def _handle_re_render_request(
-        self, parsed_data: RequestReRender, websocket: WebSocket
-    ):
-        session_id = (
-            websocket.headers.get("cookie", "")
-            .split("better_shiny_session_id=")[-1]
-            .split(";")[0]
-        )
+    async def _handle_re_render_request(self, parsed_data: RequestReRender, websocket: WebSocket):
+        session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
         await self._rerender_component(session_id, parsed_data.id, websocket)
 
-    async def _rerender_component(
-        self, session_id: str, dynamic_function_id: str, websocket: WebSocket
-    ):
+    async def _rerender_component(self, session_id: str, dynamic_function_id: str, websocket: WebSocket):
         endpoint = self.endpoint_collector.get(dynamic_function_id)
         # Prepare and teardown the local storage for the dynamic function execution
         self._local_storage.active_session_id = session_id
@@ -169,7 +143,5 @@ class BetterShiny:
         assert isinstance(html, html_tag)
         html = html.render()
         await websocket.send_json(
-            ResponseReRender(
-                type="rerender@response", html=html, id=dynamic_function_id
-            ).model_dump()
+            ResponseReRender(type="rerender@response", html=html, id=dynamic_function_id).model_dump()
         )

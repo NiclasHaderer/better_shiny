@@ -19,13 +19,11 @@ def dynamic(lazy: bool = False):
         endpoint = api.endpoint_collector.add(function_id, fn)
 
         if not api or not isinstance(api, BetterShiny):
-            raise RuntimeError(
-                "No BetterShiny instance found in thread local storage. "
-            )
+            raise RuntimeError("No BetterShiny instance found in thread local storage. ")
 
         def inner(*args, **kwargs) -> html_tag:
             # Add the endpoint instance to the endpoint
-            endpoint.add_instance(local.active_session_id, args, kwargs)
+            endpoint.create_dynamic_function(local.active_session_id, args, kwargs)
 
             outlet = div(id=function_id)
             with outlet:
