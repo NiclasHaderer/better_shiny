@@ -13,10 +13,10 @@ from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedError
 
-from better_shiny._local_storage import local_storage
-from better_shiny._utils import create_logger
-from better_shiny.app.dominator_response import DominatorResponse
-from better_shiny.communication import (
+from .dominator_response import DominatorResponse
+from .._local_storage import local_storage
+from .._utils import create_logger
+from ..communication import (
     BetterShinyRequests,
     BetterShinyRequestsType,
     RequestReRender,
@@ -47,12 +47,12 @@ class BetterShiny:
         )
         self.fast_api.get("/api/better-shiny-communication/online")(self._online_check)
 
-        local_data = local_storage()
-        if local_data.app:
+        self._local_storage = local_storage()
+        if self._local_storage.app:
             raise RuntimeError(
                 "BetterShiny instance already exists in thread local storage. "
             )
-        local_data.app = self
+        self._local_storage.app = self
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         await self.fast_api(scope, receive, send)
@@ -65,11 +65,11 @@ class BetterShiny:
             @functools.wraps(fn)
             def new_call(*args, **kwargs):
                 session_id = str(uuid.uuid4())
-                local_storage().active_request = session_id
+                local_storage().active_session_id = session_id
                 logger.info(f"Request {session_id} started")
                 html = fn(*args, **kwargs)
                 logger.info(f"Request {session_id} ended")
-                local_storage().active_request = None
+                local_storage().active_session_id = None
                 response = DominatorResponse(html)
                 response.set_cookie(
                     "better_shiny_session_id",
@@ -99,6 +99,8 @@ class BetterShiny:
             return
 
         await websocket.accept()
+
+        # TODO Register the websocket to the endpoint collector
 
         while True:
             try:
@@ -146,17 +148,28 @@ class BetterShiny:
     async def _handle_re_render_request(
         self, parsed_data: RequestReRender, websocket: WebSocket
     ):
-        endpoint = self.endpoint_collector.get(parsed_data.id)
         session_id = (
             websocket.headers.get("cookie", "")
             .split("better_shiny_session_id=")[-1]
             .split(";")[0]
         )
+        await self._rerender_component(session_id, parsed_data.id, websocket)
+
+    async def _rerender_component(
+        self, session_id: str, dynamic_function_id: str, websocket: WebSocket
+    ):
+        endpoint = self.endpoint_collector.get(dynamic_function_id)
+        # Prepare and teardown the local storage for the dynamic function execution
+        self._local_storage.active_session_id = session_id
+        self._local_storage.active_dynamic_function_id = dynamic_function_id
         html = endpoint.call_instance(session_id)
+        self._local_storage.active_session_id = None
+        self._local_storage.active_dynamic_function_id = None
+
         assert isinstance(html, html_tag)
         html = html.render()
         await websocket.send_json(
             ResponseReRender(
-                type="rerender@response", html=html, id=parsed_data.id
+                type="rerender@response", html=html, id=dynamic_function_id
             ).model_dump()
         )

@@ -29,7 +29,6 @@ window.onload = async () => {
 const populateLazyData = async () => {
   const client = await createClient();
   const elementsToRenderOnTheServer = [...document.querySelectorAll("[data-server-rendered='true'][data-lazy='true']")];
-
   for (const element of elementsToRenderOnTheServer) {
     client.send({
       type: "rerender@request",

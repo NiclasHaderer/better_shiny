@@ -27,7 +27,7 @@ def counter(start=0):
         def increment():
             while not stop_counting:
                 time.sleep(1)
-                count.set(count() + 1)
+                count.set(count.value_non_reactive + 1)
 
         thread = threading.Thread(target=increment, daemon=True)
         thread.start()
@@ -40,17 +40,15 @@ def counter(start=0):
         return tear_down
 
     @reactive.on_update(count)
-    def on_count_change():
-        double_count.set(count() * 2)
+    def on_count_change(_):
+        double_count.set(count.value_non_reactive * 2)
 
     return div(p("Count: ", count()), p("Double Count: ", double_count()))
 
 
 @dynamic(lazy=True)
 def lazy_reactive_html():
-    return div(
-        h2("Lazy"),
-    )
+    return div("Lazy counter", counter(10))
 
 
 @dynamic(lazy=True)
@@ -70,11 +68,10 @@ def plot():
     plt.xlabel("X-axis")
     plt.ylabel("Y-axis")
     plt.title("Random Scatter Plot")
-    #
     return matplot_element(plt)
 
 
-@dynamic(lazy=True)
+@dynamic()
 def dataframe():
     parent_folder = os.path.dirname(os.path.dirname(__file__))
     dataframe_folder = os.path.join(parent_folder, "dataframes")
@@ -88,11 +85,20 @@ def home():
     root = div(id="root")
     with root:
         with div():
-            lazy_reactive_html()
-            counter()
+            # h1("Lazy Reactive")
+            # lazy_reactive_html()
+            # hr()
+            # h1("Counter with 0")
+            # counter()
+            # hr()
+            # h1("Counter with 1")
             counter(1)
-            plot()
-            dataframe()
+            # hr()
+            # h1("Plot")
+            # plot()
+            # hr()
+            # h1("Dataframe")
+            # dataframe()
 
     h = head()
     with h:

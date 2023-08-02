@@ -10,5 +10,6 @@ if __name__ == "__main__":
         port=8000,
         reload=True,
         reload_dirs=[parent_dir],
+        reload_includes=["*.py", "*.html", "*.js", "*.css"],
         log_level="info",
     )
