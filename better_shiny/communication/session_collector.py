@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from better_shiny.communication.Session import SessionId, Session
+from better_shiny.communication.session import SessionId, Session
 
 
 class SessionCollector:

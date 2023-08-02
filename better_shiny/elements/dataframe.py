@@ -1,11 +1,18 @@
-import pandas as pd
 from dominate import tags
+
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 
 # TODO: Sorting, limiting, etc.
 def pandas_element(
     df: pd.DataFrame,
 ) -> tags.table:
+    if pd is None:
+        raise ImportError("Pandas is not installed")
+
     table = tags.table()
     with table:
         with tags.thead():

@@ -1,17 +1,23 @@
 import base64
 import io
+from typing import Any
 
 from dominate.tags import img
-from matplotlib import pyplot
+
+try:
+    from matplotlib import pyplot
+except ImportError:
+    pyplot = None
 
 
-def _plt_to_data_uri(plt: pyplot, dpi: int) -> str:
+def _plt_to_data_uri(plt: Any, dpi: int) -> str:
     """
     Convert the given matplotlib figure into a base64-encoded PNG image data URI.
     :param plt: The matplotlib figure to convert.
     :return: The base64-encoded PNG image data URI.
     """
     # Create a buffer to hold the PNG image data
+
     buf = io.BytesIO()
 
     # Render the figure onto the canvas, use as little space as possible
@@ -33,13 +39,17 @@ def _plt_to_data_uri(plt: pyplot, dpi: int) -> str:
 
 def matplot_element(
     plt: pyplot,
-    dpi: int = None,
+    dpi: int | None = None,
 ) -> img:
     """
     Convert the given matplotlib figure into a DOM element.
+    :param dpi: The DPI to use for the conversion.
     :param plt: The matplotlib figure to convert.
     :return: The DOM element containing the figure.
     """
+
+    if pyplot is None:
+        raise ImportError("Matplotlib is not installed")
 
     plt_data_uri = _plt_to_data_uri(plt, dpi)
 
