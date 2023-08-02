@@ -18,6 +18,7 @@ app = BetterShiny()
 @dynamic()
 def counter(start=0):
     count = reactive.Value(start)
+    double_count = reactive.Value(start * 2)
 
     @reactive.on_mount()
     def on_mount():
@@ -38,9 +39,11 @@ def counter(start=0):
 
         return tear_down
 
-    return div(
-        "Count: ", count(),
-    )
+    @reactive.on_update(count)
+    def on_count_change():
+        double_count.set(count() * 2)
+
+    return div(p("Count: ", count()), p("Double Count: ", double_count()))
 
 
 @dynamic(lazy=True)
@@ -60,13 +63,13 @@ def plot():
     sizes = np.random.randint(10, 100, num_points)
 
     # Creating the scatter plot
-    plt.scatter(x, y, c=colors, s=sizes, alpha=0.7, cmap='viridis')
+    plt.scatter(x, y, c=colors, s=sizes, alpha=0.7, cmap="viridis")
     plt.colorbar()
 
     # Adding labels and title
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-    plt.title('Random Scatter Plot')
+    plt.xlabel("X-axis")
+    plt.ylabel("Y-axis")
+    plt.title("Random Scatter Plot")
     #
     return matplot_element(plt)
 
@@ -93,6 +96,6 @@ def home():
 
     h = head()
     with h:
-        title('My Website')
+        title("My Website")
 
     return h, root

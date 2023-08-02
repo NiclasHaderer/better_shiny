@@ -1,6 +1,7 @@
 class LocalStorage:
     def __init__(self):
         from better_shiny.app import BetterShiny
+
         self.app: BetterShiny | None = None
         self.active_request: str | None = None
 

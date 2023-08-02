@@ -13,14 +13,14 @@ SessionId = str
 
 @dataclass
 class EndpointInstance:
-
-    def __init__(self,
-                 args: tuple,
-                 kwargs: dict,
-                 endpoint: Endpoint,
-                 websocket: WebSocket | None,
-                 creation_time: float,
-                 ):
+    def __init__(
+        self,
+        args: tuple,
+        kwargs: dict,
+        endpoint: Endpoint,
+        websocket: WebSocket | None,
+        creation_time: float,
+    ):
         self._args = args
         self._kwargs = kwargs
         self._endpoint = endpoint
@@ -36,10 +36,11 @@ class EndpointInstance:
 
     def is_alive(self):
         return (
-                self._websocket is not None and
-                self._websocket.client_state == WebSocketState.CONNECTED and
-                # Has to be older than 10 seconds
-                time.time() - self.creation_time > 10
+            self._websocket is not None
+            and self._websocket.client_state == WebSocketState.CONNECTED
+            and
+            # Has to be older than 10 seconds
+            time.time() - self.creation_time > 10
         )
 
 
@@ -77,16 +78,13 @@ class Endpoint:
         self._instances[session_id]._websocket = websocket
 
     def has_instance(self, session_id: SessionId):
-        return (
-                session_id in self._instances and self._instances[session_id].is_alive()
-        )
+        return session_id in self._instances and self._instances[session_id].is_alive()
 
     def call_instance(self, session_id: SessionId) -> EndpointInstance:
         return self._instances[session_id]()
 
 
 class EndpointCollector:
-
     def __init__(self):
         self._handlers: Dict[EndpointId, Endpoint] = {}
 

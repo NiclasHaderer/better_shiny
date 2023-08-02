@@ -4,7 +4,7 @@ from dominate import tags
 
 # TODO: Sorting, limiting, etc.
 def pandas_element(
-        df: pd.DataFrame,
+    df: pd.DataFrame,
 ) -> tags.table:
     table = tags.table()
     with table:

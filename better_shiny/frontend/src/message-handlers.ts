@@ -1,14 +1,13 @@
-import {ResponseError, ResponseReRender} from "./client";
+import { ResponseError, ResponseReRender } from "./client";
 
 export const rerenderHandler = (data: ResponseReRender) => {
-    const html = data.html;
-    const id = data.id;
+  const html = data.html;
+  const id = data.id;
 
-    const element = document.getElementById(id)!;
-    element.innerHTML = html;
-}
-
+  const element = document.getElementById(id)!;
+  element.innerHTML = html;
+};
 
 export const errorResponseHandler = (data: ResponseError) => {
-    console.error(data.error)
-}
+  console.error(data.error);
+};

@@ -17,7 +17,9 @@ def dynamic(lazy: bool = False):
         endpoint = api.endpoint_collector.add(route_id, fn)
 
         if not api or not isinstance(api, BetterShiny):
-            raise RuntimeError("No BetterShiny instance found in thread local storage. ")
+            raise RuntimeError(
+                "No BetterShiny instance found in thread local storage. "
+            )
 
         def inner(*args, **kwargs) -> html_tag:
             # Add the endpoint instance to the endpoint

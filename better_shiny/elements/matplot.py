@@ -15,7 +15,7 @@ def _plt_to_data_uri(plt: pyplot, dpi: int) -> str:
     buf = io.BytesIO()
 
     # Render the figure onto the canvas, use as little space as possible
-    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight')
+    plt.savefig(buf, format="png", dpi=dpi, bbox_inches="tight")
     plt.close()
 
     # Get the PNG image data from the buffer
@@ -23,7 +23,7 @@ def _plt_to_data_uri(plt: pyplot, dpi: int) -> str:
     png_data = buf.getvalue()
 
     # Encode the PNG image data into base64
-    encoded_png_data = base64.b64encode(png_data).decode('utf-8')
+    encoded_png_data = base64.b64encode(png_data).decode("utf-8")
 
     # Build the data URI with the base64-encoded PNG data
     data_uri = f"data:image/png;base64,{encoded_png_data}"
@@ -32,7 +32,8 @@ def _plt_to_data_uri(plt: pyplot, dpi: int) -> str:
 
 
 def matplot_element(
-        plt: pyplot, dpi: int = None,
+    plt: pyplot,
+    dpi: int = None,
 ) -> img:
     """
     Convert the given matplotlib figure into a DOM element.
