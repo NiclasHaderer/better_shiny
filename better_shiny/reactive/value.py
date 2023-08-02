@@ -11,7 +11,7 @@ class ValueSubscription:
     def __init__(self, cb: Callable[[], Any]):
         self._cb = cb
 
-    def unsubscribe(self):
+    def unsubscribe(self) -> None:
         self._cb()
 
 
@@ -57,27 +57,9 @@ class Value(Generic[T]):
         self._on_update_callbacks.append(cb)
         return ValueSubscription(lambda: self._on_update_callbacks.remove(cb))
 
-    def _assert_is_in_dynamic_function(self) -> None:
-        if (
-            not self._local_storage.active_dynamic_function_id
-            or not self._local_storage.active_session_id
-            or not self._local_storage.app
-        ):
-            raise RuntimeError(
-                "Cannot call value outside of a dynamic function. " "Use the Value.value_non_reactive property instead."
-            )
-
     def __call__(self) -> T:
-        self._assert_is_in_dynamic_function()
-        app = self._local_storage.app
-        session_id = self._local_storage.active_session_id
-        dyn_function_id = self._local_storage.active_dynamic_function_id
-        endpoint = app.endpoint_collector.get(dyn_function_id)
-        if not endpoint:
-            raise RuntimeError(f"Could not find endpoint with id {dyn_function_id}. " "This is a bug in BetterShiny. ")
-
-        endpoint.rerender_dynamic_function_on_change(session_id, dyn_function_id, self)
-
+        session = self._local_storage.active_session()
+        session.rerender_on_change(self._local_storage.active_dynamic_function_id, self)
         return self._value
 
     def destroy(self) -> None:
@@ -86,7 +68,7 @@ class Value(Generic[T]):
         self._on_destroy_callbacks = []
         self._on_update_callbacks = []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._value.__repr__()
 
 

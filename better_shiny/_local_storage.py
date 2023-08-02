@@ -1,3 +1,10 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .communication.session import Session
+    from .communication.dynamic_function import DynamicFunction
+
+
 class LocalStorage:
     def __init__(self):
         from .app import BetterShiny
@@ -6,13 +13,13 @@ class LocalStorage:
         self.active_session_id: str | None = None
         self.active_dynamic_function_id: str | None = None
 
-    def active_session(self):
+    def active_session(self) -> "Session":
         if not self.active_session_id:
             raise RuntimeError("No active session.")
 
-        self.app.endpoint_collector.get(self.active_session_id)
+        return self.app.session_collector.get(self.active_session_id)
 
-    def active_dynamic_function(self):
+    def active_dynamic_function(self) -> "DynamicFunction":
         if not self.active_dynamic_function_id:
             raise RuntimeError("No active dynamic function.")
         return self.active_session().get_dynamic_function(self.active_dynamic_function_id)

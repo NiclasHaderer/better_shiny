@@ -14,14 +14,19 @@ class StableValue:
     """
 
     def __init__(self, value: T):
+        self._old_value: T | None = None
         self._value = value
 
     def __call__(self) -> T:
         return self._value
 
+    @property
+    def old_value(self) -> T | None:
+        return self._old_value
+
     def set(self, value: T) -> None:
-        old_value = self._value
+        self._old_value = self._value
         self._value = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._value.__repr__()

@@ -15,7 +15,7 @@ from websockets.exceptions import ConnectionClosedError
 
 from .dominator_response import DominatorResponse
 from .._local_storage import local_storage
-from .._utils import create_logger
+from ..utils import create_logger
 from ..communication import (
     BetterShinyRequests,
     BetterShinyRequestsType,
@@ -38,9 +38,9 @@ class BetterShiny:
         # Add middlewares
         self.fast_api.add_middleware(SessionMiddleware, secret_key=random.randbytes(64))
 
-        # Register endpoint handler
-        self.endpoint_collector = SessionCollector()
-        self.fast_api.add_api_websocket_route("/api/better-shiny-communication", self._register_endpoints)
+        # Register session handler
+        self.session_collector = SessionCollector()
+        self.fast_api.add_api_websocket_route("/api/better-shiny-communication", self._ws_responder)
         self.fast_api.get("/api/better-shiny-communication/online")(self._online_check)
 
         self._local_storage = local_storage()
@@ -51,14 +51,15 @@ class BetterShiny:
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         await self.fast_api(scope, receive, send)
 
-    def serve_static_files(self, folder_path: str | Path, route: str = "/static"):
+    def serve_static_files(self, folder_path: str | Path, route: str = "/static") -> None:
         self.fast_api.mount(route, StaticFiles(directory=folder_path))
 
-    def page(self, path: str):
-        def wrapper(fn: Callable[..., html_tag]):
+    def page(self, path: str) -> Callable[[Callable[..., html_tag]], Callable[..., DominatorResponse]]:
+        def wrapper(fn: Callable[..., html_tag]) -> Callable[..., DominatorResponse]:
             @functools.wraps(fn)
-            def new_call(*args, **kwargs):
+            def new_call(*args, **kwargs) -> DominatorResponse:
                 session_id = str(uuid.uuid4())
+                self.session_collector.add(session_id)
                 local_storage().active_session_id = session_id
                 logger.info(f"Request {session_id} started")
                 html = fn(*args, **kwargs)
@@ -78,19 +79,24 @@ class BetterShiny:
         return wrapper
 
     @staticmethod
-    def _online_check():
+    def _online_check() -> bool:
         return True
 
-    async def _register_endpoints(self, websocket: WebSocket):
+    async def _ws_responder(self, websocket: WebSocket) -> None:
         # get session cooke better_shiny_session
-        session_cookie = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
-        if not session_cookie:
+        session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
+        if not session_id:
             await websocket.close(code=1003, reason="No session cookie found.")
             return
 
-        await websocket.accept()
+        try:
+            session = self.session_collector.get(session_id)
+        except ValueError:
+            await websocket.close(code=1003, reason="Session not found.")
+            return
 
-        # TODO Register the websocket to the endpoint collector
+        await websocket.accept()
+        session.websocket = websocket
 
         while True:
             try:
@@ -99,6 +105,7 @@ class BetterShiny:
                 parsed_data: BetterShinyRequestsType = BetterShinyRequests(**json_data).root
             except (WebSocketDisconnect, ConnectionClosedError):
                 # Connection closed, so we can stop the loop
+                self.session_collector.remove(session_id)
                 break
             except Exception as e:
                 # Client sent invalid data
@@ -106,13 +113,13 @@ class BetterShiny:
                 await websocket.send_json(ResponseError(type="error@response", error=f"Error: {e}").model_dump())
                 continue
             try:
-                # Delegate the client request to the correct endpoint
-                await self._delegate_to_endpoint(parsed_data, websocket)
+                # Delegate the client request to the correct dynamic function
+                await self._delegate_to_dynamic_function(parsed_data, websocket)
             except Exception as e:
                 logger.error("Server error:")
                 logger.exception(e)
 
-    async def _delegate_to_endpoint(self, parsed_data: BetterShinyRequestsType, websocket: WebSocket):
+    async def _delegate_to_dynamic_function(self, parsed_data: BetterShinyRequestsType, websocket: WebSocket) -> None:
         # switch between the different types of parsed_data
         match parsed_data:
             case RequestReRender():
@@ -127,18 +134,16 @@ class BetterShiny:
                     ).model_dump()
                 )
 
-    async def _handle_re_render_request(self, parsed_data: RequestReRender, websocket: WebSocket):
+    async def _handle_re_render_request(self, parsed_data: RequestReRender, websocket: WebSocket) -> None:
         session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
         await self._rerender_component(session_id, parsed_data.id, websocket)
 
-    async def _rerender_component(self, session_id: str, dynamic_function_id: str, websocket: WebSocket):
-        endpoint = self.endpoint_collector.get(dynamic_function_id)
+    async def _rerender_component(self, session_id: str, dynamic_function_id: str, websocket: WebSocket) -> None:
         # Prepare and teardown the local storage for the dynamic function execution
         self._local_storage.active_session_id = session_id
-        self._local_storage.active_dynamic_function_id = dynamic_function_id
-        html = endpoint.call_instance(session_id)
+        session = self._local_storage.active_session()
+        html = session(dynamic_function_id=dynamic_function_id)
         self._local_storage.active_session_id = None
-        self._local_storage.active_dynamic_function_id = None
 
         assert isinstance(html, html_tag)
         html = html.render()

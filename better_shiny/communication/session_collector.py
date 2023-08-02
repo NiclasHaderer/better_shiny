@@ -2,12 +2,19 @@ from __future__ import annotations
 
 from typing import Dict
 
-from better_shiny.communication.session import SessionId, Session
+from .session import SessionId, Session
+from ..utils import RepeatTimer
 
 
 class SessionCollector:
     def __init__(self):
         self._sessions: Dict[SessionId, Session] = {}
+        RepeatTimer(60, self._remove_unused_sessions).start()
+
+    def _remove_unused_sessions(self) -> None:
+        for session_id, session in list(self._sessions.items()):
+            if not session.is_active:
+                self.remove(session_id)
 
     def add(self, session_id: SessionId) -> Session:
         if session_id in self._sessions:
@@ -24,7 +31,7 @@ class SessionCollector:
 
         return self._sessions[dynamic_function_id]
 
-    def remove(self, dynamic_function_id: str):
+    def remove(self, dynamic_function_id: str) -> None:
         if dynamic_function_id not in self._sessions:
             raise ValueError(f"Handler with id {dynamic_function_id} does not exist")
 
