@@ -6,9 +6,7 @@ from starlette.responses import HTMLResponse
 
 
 class DominatorResponse(HTMLResponse):
-    def render(
-        self, content: html_tag | typing.Tuple[dominate_head, html_tag]
-    ) -> bytes:
+    def render(self, content: html_tag | typing.Tuple[dominate_head, html_tag]) -> bytes:
         """
         Render the content of the response.
         :param content: Two different types are supported:
@@ -19,20 +17,14 @@ class DominatorResponse(HTMLResponse):
         """
 
         # If the content is a tuple, the first element is the head and the second is the body
-        if (
-            isinstance(content, tuple)
-            or isinstance(content, list)
-            and len(content) == 2
-        ):
+        if isinstance(content, tuple) or isinstance(content, list) and len(content) == 2:
             head = content[0]
             content = content[1]
         elif isinstance(content, html_tag):
             # If the content is a "html_tag", we do not have a head
             head = None
         else:
-            raise TypeError(
-                f"App handler returned {type(content)} instead of html_tag or tuple."
-            )
+            raise TypeError(f"App handler returned {type(content)} instead of html_tag or tuple.")
 
         # If the content is not a document, we wrap it in a document
         if not isinstance(content, document):
