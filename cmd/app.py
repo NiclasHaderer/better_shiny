@@ -1,5 +1,4 @@
 import os
-from threading import Timer
 
 import dominate.util
 import matplotlib.pyplot as plt
@@ -12,7 +11,7 @@ from better_shiny.app import BetterShiny
 from better_shiny.elements import matplot_element, pandas_element
 from better_shiny.events.handler import on
 from better_shiny.reactive import dynamic
-from better_shiny.utils import RepeatTimer
+from better_shiny.utils import set_timeout, set_interval
 
 app = BetterShiny()
 
@@ -24,10 +23,8 @@ def timer(start=0):
 
     @reactive.on_mount()
     def on_mount():
-        t = RepeatTimer(1, lambda: count.set(count.value_non_reactive + 1))
-        t.daemon = True
-        t.start()
-        return lambda: t.cancel()
+        interval = set_interval(lambda: count.set(count.value_non_reactive + 1), 1)
+        return lambda: interval.cancel()
 
     @reactive.on_update(count)
     def on_count_change(_):
@@ -69,11 +66,9 @@ def stable_value():
 
     @reactive.on_mount()
     def on_mount():
-        stable.set(100_000)
-
-        t = Timer(2, lambda: dynamic_value.set(2))
-        t.daemon = True
-        t.start()
+        dynamic_value.set(1)
+        set_timeout(lambda: stable.set(1), 1)
+        set_timeout(lambda: dynamic_value.set(2), 2)
 
     return div(
         p(

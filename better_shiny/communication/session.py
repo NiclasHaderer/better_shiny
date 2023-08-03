@@ -1,6 +1,6 @@
 import asyncio
 import time
-from typing import Dict
+from typing import Dict, List, Callable
 
 from starlette.websockets import WebSocket, WebSocketState
 
@@ -19,6 +19,7 @@ class Session:
         self._dynamic_functions: Dict[DynamicFunctionId, DynamicFunction] = {}
         self._local_storage = local_storage()
         self._startup_time = time.time()
+        self._delayed_executions: List[Callable[[], None]] = []
 
     @property
     def is_active(self) -> bool:
@@ -61,15 +62,20 @@ class Session:
     def rerender_on_change(self, dynamic_function_id: DynamicFunctionId, value: Value) -> None:
         app = self._local_storage.app
 
-        def invoke_rerender(_: Value) -> None:
+        def invoke_rerender(inner_value: Value, skip_delayed_executions: bool = False) -> None:
             if not self.is_active:
                 # Websocket has closed and the session will be cleaned up soon
                 return
 
             if self.websocket is None:
-                # No connection established (yet) -> wait for a websocket connection to be established
-                # TODO save the rerender and invoke it later
+                # No connection established (yet) -> waits for a websocket connection to be established
+                self._delayed_executions.append(lambda: invoke_rerender(inner_value, skip_delayed_executions=True))
                 return
+
+            if len(self._delayed_executions) > 0 and not skip_delayed_executions:
+                for delayed_execution in self._delayed_executions:
+                    delayed_execution()
+                self._delayed_executions.clear()
 
             # Check if the function was called from within the event loop
             try:

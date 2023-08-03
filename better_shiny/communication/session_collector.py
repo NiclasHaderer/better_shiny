@@ -3,15 +3,13 @@ from __future__ import annotations
 from typing import Dict
 
 from .session import SessionId, Session
-from ..utils import RepeatTimer
+from ..utils import set_interval
 
 
 class SessionCollector:
     def __init__(self):
         self._sessions: Dict[SessionId, Session] = {}
-        timer = RepeatTimer(60, self._remove_unused_sessions)
-        timer.daemon = True
-        timer.start()
+        set_interval(self._remove_unused_sessions, 60)
 
     def _remove_unused_sessions(self) -> None:
         for session_id, session in list(self._sessions.items()):
