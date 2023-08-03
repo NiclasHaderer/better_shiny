@@ -7,6 +7,7 @@ from typing import Callable
 
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
+from pydantic import ValidationError
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocketDisconnect
@@ -61,11 +62,11 @@ class BetterShiny:
             def new_call(*args, **kwargs) -> DominatorResponse:
                 session_id = str(uuid.uuid4())
                 self.session_collector.add(session_id)
-                local_storage().active_session_id = session_id
+                self._local_storage.active_session_id = session_id
                 logger.info(f"Request {session_id} started")
                 html = fn(*args, **kwargs)
                 logger.info(f"Request {session_id} ended")
-                local_storage().active_session_id = None
+                self._local_storage.active_session_id = None
                 response = DominatorResponse(html)
                 response.set_cookie(
                     "better_shiny_session_id",
@@ -108,9 +109,9 @@ class BetterShiny:
                 # Connection closed, so we can stop the loop
                 self.session_collector.remove(session_id)
                 break
-            except Exception as e:
+            # Pydantic exception
+            except ValidationError as e:
                 # Client sent invalid data
-                logger.warning("Client error:", e)
                 await websocket.send_json(ResponseError(type="error@response", error=f"Error: {e}").model_dump())
                 continue
             try:
@@ -128,7 +129,7 @@ class BetterShiny:
                 await self._handle_re_render_request(parsed_data, websocket)
             case RequestEvent():
                 logger.info(f"Received request to handle event {parsed_data.id}")
-                await self._handle_event_request(parsed_data, websocket)
+                self._handle_event_request(parsed_data, websocket)
             case _:
                 logger.warning(f"Unknown request type: {parsed_data}")
                 await websocket.send_json(
@@ -138,7 +139,7 @@ class BetterShiny:
                     ).model_dump()
                 )
 
-    async def _handle_event_request(self, parsed_data: RequestEvent, websocket: WebSocket) -> None:
+    def _handle_event_request(self, parsed_data: RequestEvent, websocket: WebSocket) -> None:
         session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
         # Prepare and teardown the local storage for the dynamic function execution
         self._local_storage.active_session_id = session_id
@@ -156,8 +157,11 @@ class BetterShiny:
     async def _rerender_component(self, session_id: str, dynamic_function_id: str, websocket: WebSocket) -> None:
         # Prepare and teardown the local storage for the dynamic function execution
         self._local_storage.active_session_id = session_id
-        session = self._local_storage.active_session()
-        html = session(dynamic_function_id=dynamic_function_id)
+        self._local_storage.active_dynamic_function_id = dynamic_function_id
+        dynamic_function = self._local_storage.active_dynamic_function()
+        html = dynamic_function()
+        self._local_storage.active_dynamic_function_id = None
+        self._local_storage.active_session_id = None
 
         assert isinstance(html, RenderResult)
         html = html.render()

@@ -32,7 +32,7 @@ def dynamic(lazy: bool = False) -> Callable[[T], T]:
                 if lazy:
                     attr(data_lazy="true")
                 else:
-                    session(dynamic_function_id)
+                    session.get_dynamic_function(dynamic_function_id)()
 
             return outlet
 

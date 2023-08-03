@@ -14,13 +14,13 @@ class LocalStorage:
         self.active_dynamic_function_id: str | None = None
 
     def active_session(self) -> "Session":
-        if not self.active_session_id:
+        if self.active_session_id is None:
             raise RuntimeError("No active session.")
 
         return self.app.session_collector.get(self.active_session_id)
 
     def active_dynamic_function(self) -> "DynamicFunction":
-        if not self.active_dynamic_function_id:
+        if self.active_dynamic_function_id is None:
             raise RuntimeError("No active dynamic function.")
         return self.active_session().get_dynamic_function(self.active_dynamic_function_id)
 

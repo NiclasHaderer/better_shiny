@@ -45,7 +45,7 @@ class DynamicFunction:
                 on_destroy = fn()
                 if on_destroy is not None:
                     self._on_unmount.append(on_destroy)
-
+        self._local_storage.active_dynamic_function_id = None
         self._first_call = False
         return result
 
