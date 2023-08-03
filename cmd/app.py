@@ -27,10 +27,10 @@ def timer(start=0):
         def increase():
             count.set(count.value_non_reactive + 1)
 
-        timer = RepeatTimer(1, increase)
-        timer.daemon = True
-        timer.start()
-        return lambda: timer.cancel()
+        t = RepeatTimer(1, increase)
+        t.daemon = True
+        t.start()
+        return lambda: t.cancel()
 
     @reactive.on_update(count)
     def on_count_change(_):
