@@ -1,5 +1,6 @@
 import os
 
+import dominate.util
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -25,7 +26,9 @@ def counter(start=0):
             count.set(count.value_non_reactive + 1)
 
         timer = RepeatTimer(1, increase)
+        timer.daemon = True
         timer.start()
+        return lambda: timer.cancel()
 
     @reactive.on_update(count)
     def on_count_change(_):
@@ -36,7 +39,12 @@ def counter(start=0):
 
 @dynamic(lazy=True)
 def lazy_reactive_html():
-    return div("Lazy counter", counter(10))
+    with dominate.util.container() as container:
+        plot()
+        counter(10)
+        p("Hello World" * 10)
+
+    return container
 
 
 @dynamic(lazy=True)
@@ -73,7 +81,7 @@ def home():
     root = div(id="root")
     with root:
         with div():
-            h1("Lazy Reactive")
+            h1("Counter lazy")
             lazy_reactive_html()
             hr()
             h1("Counter with 0")
@@ -81,9 +89,6 @@ def home():
             hr()
             h1("Counter with 1")
             counter(1)
-            hr()
-            h1("Plot")
-            plot()
             hr()
             h1("Dataframe")
             dataframe()

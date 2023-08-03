@@ -5,7 +5,6 @@ import uuid
 from pathlib import Path
 from typing import Callable
 
-from dominate.tags import html_tag
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -15,6 +14,7 @@ from websockets.exceptions import ConnectionClosedError
 
 from .dominator_response import DominatorResponse
 from .._local_storage import local_storage
+from .._types import RenderFunction, RenderResult
 from ..utils import create_logger
 from ..communication import (
     BetterShinyRequests,
@@ -54,8 +54,8 @@ class BetterShiny:
     def serve_static_files(self, folder_path: str | Path, route: str = "/static") -> None:
         self.fast_api.mount(route, StaticFiles(directory=folder_path))
 
-    def page(self, path: str) -> Callable[[Callable[..., html_tag]], Callable[..., DominatorResponse]]:
-        def wrapper(fn: Callable[..., html_tag]) -> Callable[..., DominatorResponse]:
+    def page(self, path: str) -> Callable[[RenderFunction], Callable[..., DominatorResponse]]:
+        def wrapper(fn: RenderFunction) -> Callable[..., DominatorResponse]:
             @functools.wraps(fn)
             def new_call(*args, **kwargs) -> DominatorResponse:
                 session_id = str(uuid.uuid4())
@@ -145,7 +145,7 @@ class BetterShiny:
         html = session(dynamic_function_id=dynamic_function_id)
         self._local_storage.active_session_id = None
 
-        assert isinstance(html, html_tag)
+        assert isinstance(html, RenderResult)
         html = html.render()
         await websocket.send_json(
             ResponseReRender(type="rerender@response", html=html, id=dynamic_function_id).model_dump()

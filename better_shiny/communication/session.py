@@ -1,12 +1,12 @@
 import asyncio
 import time
-from typing import Dict, Callable
+from typing import Dict
 
-from dominate.tags import html_tag
 from starlette.websockets import WebSocket, WebSocketState
 
 from .dynamic_function import DynamicFunctionId, DynamicFunction
 from .._local_storage import local_storage
+from .._types import RenderFunction, RenderResult
 from ..reactive import Value
 
 SessionId = str
@@ -47,7 +47,7 @@ class Session:
         dynamic_function_id: DynamicFunctionId,
         args: tuple,
         kwargs: dict,
-        func: Callable[..., html_tag],
+        func: RenderFunction,
     ) -> None:
         if dynamic_function_id in self._dynamic_functions:
             raise ValueError(
@@ -77,6 +77,6 @@ class Session:
         dynamic_function = self.get_dynamic_function(dynamic_function_id)
         dynamic_function.listen_for_changes(value, invoke_rerender)
 
-    def __call__(self, dynamic_function_id: DynamicFunctionId) -> html_tag:
+    def __call__(self, dynamic_function_id: DynamicFunctionId) -> RenderResult:
         self._local_storage.active_session_id = self.session_id
         return self.get_dynamic_function(dynamic_function_id)()

@@ -1,11 +1,12 @@
 from typing import Callable, TypeVar, Dict
 
 from dominate.dom_tag import attr
-from dominate.tags import div, html_tag
+from dominate.tags import div
 
 from .._local_storage import local_storage
+from .._types import RenderResult, RenderFunction
 
-T = TypeVar("T", bound=Callable[..., html_tag])
+T = TypeVar("T", bound=RenderFunction)
 
 _function_call_counter: Dict[int, int] = {}
 
@@ -16,7 +17,7 @@ def dynamic(lazy: bool = False) -> Callable[[T], T]:
         fn_id = id(fn)
         _function_call_counter[fn_id] = 0
 
-        def inner(*args, **kwargs) -> html_tag:
+        def inner(*args, **kwargs) -> RenderResult:
             session = local.active_session()
 
             # Add the endpoint instance to the endpoint

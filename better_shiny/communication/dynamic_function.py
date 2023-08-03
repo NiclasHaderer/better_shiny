@@ -1,8 +1,8 @@
 from typing import Callable, Any, Dict, Set, List
 
-from dominate.tags import html_tag
 
 from .._local_storage import local_storage
+from .._types import RenderFunction, RenderResult
 from ..reactive import Value
 
 DynamicFunctionId = str
@@ -12,7 +12,7 @@ LineNr = int
 class DynamicFunction:
     def __init__(
         self,
-        func: Callable[..., html_tag],
+        func: RenderFunction,
         dynamic_function_id: DynamicFunctionId,
         args: tuple,
         kwargs: dict,
@@ -24,7 +24,7 @@ class DynamicFunction:
         self._dynamic_function_id = dynamic_function_id
 
         # Lifecycle hooks
-        self._on_mount: List[Callable[[], Any]] = []
+        self._on_mount: List[Callable[[], Callable[[], Any] | None]] = []
         self._on_unmount: List[Callable[[], Any]] = []
         self._first_call = True
 
@@ -35,12 +35,14 @@ class DynamicFunction:
         # Local storage
         self._local_storage = local_storage()
 
-    def __call__(self) -> html_tag:
+    def __call__(self) -> RenderResult:
         self._local_storage.active_dynamic_function_id = self._dynamic_function_id
         result = self._func(*self._args, **self._kwargs)
         if self._first_call:
             for fn in self._on_mount:
-                fn()
+                on_destroy = fn()
+                if on_destroy is not None:
+                    self._on_unmount.append(on_destroy)
 
         self._first_call = False
         return result
@@ -58,7 +60,7 @@ class DynamicFunction:
         # TODO call the destroy method of
         #  1. child dynamic functions
 
-    def on_mount(self, fn: Callable[[], Any]) -> None:
+    def on_mount(self, fn: Callable[[], Callable[[], Any] | None]) -> None:
         self._on_mount.append(fn)
 
     def on_unmount(self, fn: Callable[[], Any]) -> None:

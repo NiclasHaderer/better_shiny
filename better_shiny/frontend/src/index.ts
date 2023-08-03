@@ -1,6 +1,7 @@
 import { createClient } from "./client";
 import { errorResponseHandler, rerenderHandler } from "./message-handlers";
 import { retryEvery } from "./utils";
+import { populateLazyData } from "./lazy";
 
 window.onload = async () => {
   const client = await createClient();
@@ -23,16 +24,5 @@ window.onload = async () => {
     }, 300);
   });
 
-  void populateLazyData();
-};
-
-const populateLazyData = async () => {
-  const client = await createClient();
-  const elementsToRenderOnTheServer = [...document.querySelectorAll("[data-server-rendered='true'][data-lazy='true']")];
-  for (const element of elementsToRenderOnTheServer) {
-    client.send({
-      type: "rerender@request",
-      id: element.id,
-    });
-  }
+  void populateLazyData(document.body);
 };

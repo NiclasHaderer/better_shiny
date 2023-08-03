@@ -1,4 +1,4 @@
-import { BetterShinyRequests, BetterShinyResponses } from "./messages.ts";
+import { BetterShinyRequests, BetterShinyResponses } from "./messages";
 
 export interface Subscription {
   unsubscribe: () => void;

@@ -1,2 +1,2 @@
 export { createClient } from "./client";
-export * from "./messages.ts";
+export * from "./messages";
