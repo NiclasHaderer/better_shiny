@@ -38,9 +38,6 @@ class _ValueMeta(type):
 
 
 class Value(Generic[T], metaclass=_ValueMeta):
-    # TODO bind a reactive value to a websocket connection, so if the websocket connection
-    #  is closed, the value is destroyed and no re-renders are triggered
-    # TODO: track where the value is used, and re-render on update.
     """
     def __new__(cls, *args, **kwargs):
         # Get the line of code where the value was created at.
