@@ -1,4 +1,3 @@
-import asyncio
 import time
 from typing import Dict, List, Callable
 
@@ -77,22 +76,12 @@ class Session:
                     delayed_execution()
                 self._delayed_executions.clear()
 
-            # Check if the function was called from within the event loop
-            try:
-                is_running = asyncio.get_event_loop().is_running()
-            except RuntimeError:
-                is_running = False
-
             # noinspection PyProtectedMember
-            awaitable = app._rerender_component(
+            app._rerender_component(
                 session_id=self.session_id,
                 dynamic_function_id=dynamic_function_id,
                 websocket=self.websocket,
             )
-            if is_running:
-                asyncio.get_event_loop().create_task(awaitable)
-            else:
-                asyncio.run(awaitable)
 
         dynamic_function = self.get_dynamic_function(dynamic_function_id)
         dynamic_function.listen_for_changes(value, invoke_rerender)

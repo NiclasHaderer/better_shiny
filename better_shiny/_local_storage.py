@@ -1,8 +1,12 @@
 from typing import TYPE_CHECKING
 
+from .utils import create_logger
+
 if TYPE_CHECKING:
     from .communication.session import Session
     from .communication.dynamic_function import DynamicFunction
+
+logger = create_logger(__name__)
 
 
 class LocalStorage:
@@ -10,8 +14,26 @@ class LocalStorage:
         from .app import BetterShiny
 
         self.app: BetterShiny | None = None
-        self.active_session_id: str | None = None
-        self.active_dynamic_function_id: str | None = None
+        self._active_session_id: str | None = None
+        self._active_dynamic_function_id: str | None = None
+
+    @property
+    def active_session_id(self) -> str | None:
+        return self._active_session_id
+
+    @active_session_id.setter
+    def active_session_id(self, value: str | None):
+        logger.info(f"Setting active session id to {value}")
+        self._active_session_id = value
+
+    @property
+    def active_dynamic_function_id(self) -> str | None:
+        return self._active_dynamic_function_id
+
+    @active_dynamic_function_id.setter
+    def active_dynamic_function_id(self, value: str | None):
+        logger.info(f"Setting active dynamic function id to {value}")
+        self._active_dynamic_function_id = value
 
     def active_session(self) -> "Session":
         if self.active_session_id is None:

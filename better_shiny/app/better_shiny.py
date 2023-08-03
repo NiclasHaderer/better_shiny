@@ -14,9 +14,9 @@ from starlette.websockets import WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedError
 
 from .dominator_response import DominatorResponse
+from .message_sender import MessageSender
 from .._local_storage import local_storage
 from .._types import RenderFunction, RenderResult
-from ..utils import create_logger
 from ..communication import (
     BetterShinyRequests,
     BetterShinyRequestsType,
@@ -26,6 +26,7 @@ from ..communication import (
     ResponseReRender,
     RequestEvent,
 )
+from ..utils import create_logger
 
 logger = create_logger(__name__)
 
@@ -49,6 +50,7 @@ class BetterShiny:
         if self._local_storage.app:
             raise RuntimeError("BetterShiny instance already exists in thread local storage. ")
         self._local_storage.app = self
+        self._message_sender = MessageSender(self)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         await self.fast_api(scope, receive, send)
@@ -112,31 +114,32 @@ class BetterShiny:
             # Pydantic exception
             except ValidationError as e:
                 # Client sent invalid data
-                await websocket.send_json(ResponseError(type="error@response", error=f"Error: {e}").model_dump())
+                self._message_sender.queue_message(ResponseError(type="error@response", error=f"Error: {e}"))
                 continue
             try:
                 # Delegate the client request to the correct dynamic function
-                await self._delegate_to_dynamic_function(parsed_data, websocket)
+                self._delegate_to_dynamic_function(parsed_data, websocket)
             except Exception as e:
                 logger.error("Server error:")
                 logger.exception(e)
 
-    async def _delegate_to_dynamic_function(self, parsed_data: BetterShinyRequestsType, websocket: WebSocket) -> None:
+    def _delegate_to_dynamic_function(self, parsed_data: BetterShinyRequestsType, websocket: WebSocket) -> None:
         # switch between the different types of parsed_data
         match parsed_data:
             case RequestReRender():
                 logger.info(f"Received request to re-render {parsed_data.id}")
-                await self._handle_re_render_request(parsed_data, websocket)
+                self._handle_re_render_request(parsed_data, websocket)
             case RequestEvent():
                 logger.info(f"Received request to handle event {parsed_data.id}")
                 self._handle_event_request(parsed_data, websocket)
             case _:
                 logger.warning(f"Unknown request type: {parsed_data}")
-                await websocket.send_json(
+                self._message_sender.queue_message(
+                    websocket,
                     ResponseError(
                         type="error@response",
                         error=f"Unknown request type: {parsed_data}",
-                    ).model_dump()
+                    ),
                 )
 
     def _handle_event_request(self, parsed_data: RequestEvent, websocket: WebSocket) -> None:
@@ -150,11 +153,11 @@ class BetterShiny:
         self._local_storage.active_dynamic_function_id = None
         self._local_storage.active_session_id = None
 
-    async def _handle_re_render_request(self, parsed_data: RequestReRender, websocket: WebSocket) -> None:
+    def _handle_re_render_request(self, parsed_data: RequestReRender, websocket: WebSocket) -> None:
         session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
-        await self._rerender_component(session_id, parsed_data.id, websocket)
+        self._rerender_component(session_id, parsed_data.id, websocket)
 
-    async def _rerender_component(self, session_id: str, dynamic_function_id: str, websocket: WebSocket) -> None:
+    def _rerender_component(self, session_id: str, dynamic_function_id: str, websocket: WebSocket) -> None:
         # Prepare and teardown the local storage for the dynamic function execution
         self._local_storage.active_session_id = session_id
         self._local_storage.active_dynamic_function_id = dynamic_function_id
@@ -165,6 +168,6 @@ class BetterShiny:
 
         assert isinstance(html, RenderResult)
         html = html.render()
-        await websocket.send_json(
-            ResponseReRender(type="rerender@response", html=html, id=dynamic_function_id).model_dump()
+        self._message_sender.queue_message(
+            websocket, ResponseReRender(type="rerender@response", html=html, id=dynamic_function_id)
         )

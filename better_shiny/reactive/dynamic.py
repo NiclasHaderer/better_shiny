@@ -23,6 +23,7 @@ def dynamic(lazy: bool = False) -> Callable[[T], T]:
             # Add the endpoint instance to the endpoint
             dynamic_function_id = f"{fn_id}_{_function_call_counter[fn_id]}"
             _function_call_counter[fn_id] += 1
+            local.active_dynamic_function_id = dynamic_function_id
 
             session.create_dynamic_function(dynamic_function_id, args, kwargs, fn)
 
@@ -33,7 +34,7 @@ def dynamic(lazy: bool = False) -> Callable[[T], T]:
                     attr(data_lazy="true")
                 else:
                     session.get_dynamic_function(dynamic_function_id)()
-
+            local.active_dynamic_function_id = None
             return outlet
 
         # Mark the function as dynamic, that way we can check if a function is decorated with @dynamic

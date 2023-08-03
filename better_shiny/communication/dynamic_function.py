@@ -38,14 +38,12 @@ class DynamicFunction:
 
     def __call__(self) -> RenderResult:
         self._on_event_handlers.clear()
-        self._local_storage.active_dynamic_function_id = self._dynamic_function_id
         result = self._func(*self._args, **self._kwargs)
         if self._first_call:
             for fn in self._on_mount:
                 on_destroy = fn()
                 if on_destroy is not None:
                     self._on_unmount.append(on_destroy)
-        self._local_storage.active_dynamic_function_id = None
         self._first_call = False
         return result
 
