@@ -5,7 +5,7 @@ from starlette.websockets import WebSocket, WebSocketState
 
 from .dynamic_function import DynamicFunctionId, DynamicFunction
 from .._local_storage import local_storage
-from .._types import RenderFunction, RenderResult
+from .._types import RenderFunction
 from ..reactive import Value
 
 SessionId = str

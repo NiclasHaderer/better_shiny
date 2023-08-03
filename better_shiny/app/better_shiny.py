@@ -114,7 +114,7 @@ class BetterShiny:
             # Pydantic exception
             except ValidationError as e:
                 # Client sent invalid data
-                self._message_sender.queue_message(ResponseError(type="error@response", error=f"Error: {e}"))
+                self._message_sender.queue_message(websocket, ResponseError(type="error@response", error=f"Error: {e}"))
                 continue
             try:
                 # Delegate the client request to the correct dynamic function
