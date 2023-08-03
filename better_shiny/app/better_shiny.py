@@ -142,10 +142,12 @@ class BetterShiny:
         session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
         # Prepare and teardown the local storage for the dynamic function execution
         self._local_storage.active_session_id = session_id
-
+        self._local_storage.active_dynamic_function_id = parsed_data.id
         session = self._local_storage.active_session()
         dynamic_function = session.get_dynamic_function(parsed_data.id)
         dynamic_function.call_event(parsed_data.event_handler_id, parsed_data.event)
+        self._local_storage.active_dynamic_function_id = None
+        self._local_storage.active_session_id = None
 
     async def _handle_re_render_request(self, parsed_data: RequestReRender, websocket: WebSocket) -> None:
         session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
@@ -156,7 +158,6 @@ class BetterShiny:
         self._local_storage.active_session_id = session_id
         session = self._local_storage.active_session()
         html = session(dynamic_function_id=dynamic_function_id)
-        self._local_storage.active_session_id = None
 
         assert isinstance(html, RenderResult)
         html = html.render()

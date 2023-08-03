@@ -9,7 +9,8 @@ export const rerenderHandler = (data: ResponseReRender) => {
 
   const element = document.getElementById(id);
   if (element) {
-    innerHTML(element, html);
+    element.innerHTML = html;
+    // innerHTML(element, html);
     void populateLazyData(element);
     void reRegisterEvents(element);
   }

@@ -11,6 +11,7 @@ from better_shiny.app import BetterShiny
 from better_shiny.elements import matplot_element, pandas_element
 from better_shiny.events.handler import on
 from better_shiny.reactive import dynamic
+from better_shiny.themes import theme_picnic, theme_milligram, theme_pico, theme_chota, theme_pure, theme_water
 from better_shiny.utils import set_timeout, set_interval
 
 app = BetterShiny()
@@ -110,9 +111,49 @@ def dataframe():
     return pandas_element(df.head(10))
 
 
+@dynamic()
+def theme():
+    current_theme = reactive.Value("picnic")
+
+    with dominate.util.container() as container:
+        if current_theme() == "chota":
+            theme_chota()
+        elif current_theme() == "milligram":
+            theme_milligram()
+        elif current_theme() == "picnic":
+            theme_picnic()
+        elif current_theme() == "pico":
+            theme_pico()
+        elif current_theme() == "pure":
+            theme_pure()
+        elif current_theme() == "water":
+            theme_water()
+
+        with label("Change theme"):
+            with select():
+                on("change", lambda event, _: current_theme.set(event["value"]))
+                with option("chota"):
+                    attr(selected=current_theme() == "chota")
+                with option("milligram"):
+                    attr(selected=current_theme() == "milligram")
+                with option("picnic"):
+                    attr(selected=current_theme() == "picnic")
+                with option("pico"):
+                    attr(selected=current_theme() == "pico")
+                with option("pure"):
+                    attr(selected=current_theme() == "pure")
+                with option("water"):
+                    attr(selected=current_theme() == "water")
+
+    return container
+
+
 @app.page("/")
 def home():
     with dominate.util.container() as root:
+        title("My Website")
+        theme()
+
         h1("Counter")
         counter()
         hr()
@@ -130,7 +171,4 @@ def home():
         hr()
         stable_value()
 
-    with head() as h:
-        title("My Website")
-
-    return h, root
+    return root

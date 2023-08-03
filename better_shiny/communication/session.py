@@ -98,5 +98,4 @@ class Session:
         dynamic_function.listen_for_changes(value, invoke_rerender)
 
     def __call__(self, dynamic_function_id: DynamicFunctionId) -> RenderResult:
-        self._local_storage.active_session_id = self.session_id
         return self.get_dynamic_function(dynamic_function_id)()

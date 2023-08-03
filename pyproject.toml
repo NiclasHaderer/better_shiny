@@ -16,6 +16,7 @@ numpy = "^1.25.2"
 pandas = "^2.0.3"
 
 # Optional dependencies
+httpx = "^0.24.1"
 [tool.poetry.extras]
 data = [
     "matplotlib",
