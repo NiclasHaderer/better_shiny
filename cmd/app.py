@@ -24,10 +24,7 @@ def timer(start=0):
 
     @reactive.on_mount()
     def on_mount():
-        def increase():
-            count.set(count.value_non_reactive + 1)
-
-        t = RepeatTimer(1, increase)
+        t = RepeatTimer(1, lambda: count.set(count.value_non_reactive + 1))
         t.daemon = True
         t.start()
         return lambda: t.cancel()
@@ -41,7 +38,7 @@ def timer(start=0):
 
 @dynamic()
 def counter():
-    count = reactive.Value(0, "count")
+    count = reactive.Value(0)
 
     with dominate.util.container() as container:
         with button("Increase"):
@@ -120,28 +117,25 @@ def dataframe():
 
 @app.page("/")
 def home():
-    root = div(id="root")
-    with root:
-        with div():
-            h1("Counter")
-            counter()
-            hr()
-            h1("Timer lazy")
-            lazy_reactive_html()
-            hr()
-            h1("Timer with 0")
-            timer()
-            hr()
-            h1("Timer with 1")
-            timer(1)
-            hr()
-            h1("Dataframe")
-            dataframe()
-            hr()
-            stable_value()
+    with dominate.util.container() as root:
+        h1("Counter")
+        counter()
+        hr()
+        h1("Timer lazy")
+        lazy_reactive_html()
+        hr()
+        h1("Timer with 0")
+        timer()
+        hr()
+        h1("Timer with 1")
+        timer(1)
+        hr()
+        h1("Dataframe")
+        dataframe()
+        hr()
+        stable_value()
 
-    h = head()
-    with h:
+    with head() as h:
         title("My Website")
 
     return h, root
