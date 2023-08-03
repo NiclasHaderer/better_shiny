@@ -1,22 +1,24 @@
-from threading import Timer
+import asyncio
 from typing import Callable
 
+from .._local_storage import local_storage
 
-class RepeatTimer(Timer):
-    def run(self):
-        while not self.finished.wait(self.interval):
-            self.function(*self.args, **self.kwargs)
+local = local_storage()
 
 
-def set_timeout(func: Callable[[], None], timeout: float) -> Timer:
-    timer = Timer(timeout, func)
-    timer.daemon = True
-    timer.start()
-    return timer
+def set_timeout(func: Callable[[], None], timeout: float) -> asyncio.Task:
+    async def task_wrapper():
+        await asyncio.sleep(timeout)
+        func()
+    loop = asyncio.get_event_loop()
+    return loop.create_task(task_wrapper())
 
 
-def set_interval(func: Callable[[], None], interval: float) -> RepeatTimer:
-    timer = RepeatTimer(interval, func)
-    timer.daemon = True
-    timer.start()
-    return timer
+def set_interval(func: Callable[[], None], interval: float) -> asyncio.Task:
+    async def task_wrapper():
+        while True:
+            await asyncio.sleep(interval)
+            func()
+
+    loop = asyncio.get_event_loop()
+    return loop.create_task(task_wrapper())

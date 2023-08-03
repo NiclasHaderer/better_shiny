@@ -54,6 +54,7 @@ def counter():
 def lazy_reactive_html():
     with dominate.util.container() as container:
         plot()
+        plot()
         timer(10)
         p("Hello World" * 10)
 

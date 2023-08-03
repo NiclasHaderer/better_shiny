@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import threading
 from typing import Callable, TypeVar, Any, List, Generic
 
 from .._local_storage import local_storage
@@ -68,6 +69,7 @@ class Value(Generic[T], metaclass=_ValueMeta):
         self._on_destroy_callbacks: List[DestroyCb] = []
         self._local_storage = local_storage()
         self._name = name
+        self._thread = threading.current_thread()
 
     @property
     def old_value_non_reactive(self) -> T | None:
@@ -78,6 +80,9 @@ class Value(Generic[T], metaclass=_ValueMeta):
         return self._value
 
     def set(self, value: T) -> None:
+        if self._thread != threading.current_thread():
+            raise ValueError("Value can only be set from the same thread it was created in")
+
         if self._value == value:
             return
 
