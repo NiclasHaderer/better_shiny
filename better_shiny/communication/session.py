@@ -29,7 +29,7 @@ class Session:
         return (
             self.websocket is not None
             and self.websocket.client_state == WebSocketState.CONNECTED
-            and (time.time() - self._startup_time < 60)
+            or (time.time() - self._startup_time < 60)
         )
 
     def destroy(self) -> None:
@@ -62,7 +62,13 @@ class Session:
         app = self._local_storage.app
 
         def invoke_rerender(_: Value) -> None:
-            if not self.is_active or self.websocket is None:
+            if not self.is_active:
+                # Websocket has closed and the session will be cleaned up soon
+                return
+
+            if self.websocket is None:
+                # No connection established (yet) -> wait for a websocket connection to be established
+                # TODO save the rerender and invoke it later
                 return
 
             # Check if the function was called from within the event loop
