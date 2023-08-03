@@ -2,6 +2,7 @@ import { createClient } from "./client";
 import { errorResponseHandler, rerenderHandler } from "./message-handlers";
 import { retryEvery } from "./utils";
 import { populateLazyData } from "./lazy";
+import {reRegisterEvents} from "./events.ts";
 
 window.onload = async () => {
   const client = await createClient();
@@ -25,4 +26,5 @@ window.onload = async () => {
   });
 
   void populateLazyData(document.body);
+  void reRegisterEvents(document.body);
 };

@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Literal, Union, Dict, Any
 
 from pydantic import BaseModel, RootModel
 
@@ -11,7 +11,8 @@ class RequestReRender(BaseModel):
 class RequestEvent(BaseModel):
     type: Literal["event@request"]
     id: str
-    event: str
+    event_handler_id: str
+    event: Dict[str, Any]
 
 
 BetterShinyRequestsType = Union[RequestReRender, RequestEvent]

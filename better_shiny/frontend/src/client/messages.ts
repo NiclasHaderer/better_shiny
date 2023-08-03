@@ -6,7 +6,8 @@ export interface RequestReRender {
 export interface RequestEvent {
   type: "event@request";
   id: string;
-  event: string;
+  event_handler_id: string;
+  event: Record<string, any>;
 }
 
 export type BetterShinyRequests = RequestReRender | RequestEvent;

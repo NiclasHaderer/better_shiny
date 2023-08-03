@@ -1,6 +1,5 @@
 from typing import Callable, Any, Dict, Set, List
 
-
 from .._local_storage import local_storage
 from .._types import RenderFunction, RenderResult
 from ..reactive import Value
@@ -27,6 +26,7 @@ class DynamicFunction:
         self._on_mount: List[Callable[[], Callable[[], Any] | None]] = []
         self._on_unmount: List[Callable[[], Any]] = []
         self._first_call = True
+        self._on_event_handlers: Dict[str, Callable[[Dict[str, Any]], None]] = {}
 
         # Stable values
         self._values: Dict[LineNr, Value] = {}
@@ -36,6 +36,7 @@ class DynamicFunction:
         self._local_storage = local_storage()
 
     def __call__(self) -> RenderResult:
+        self._on_event_handlers.clear()
         self._local_storage.active_dynamic_function_id = self._dynamic_function_id
         result = self._func(*self._args, **self._kwargs)
         if self._first_call:
@@ -81,3 +82,12 @@ class DynamicFunction:
 
         value.on_update(invoke_rerender)
         self._values_to_listen_for_changes.add(value)
+
+    def register_event_handler(self, event_handler_id: str, handler: Callable[[Any, Any], None], data):
+        self._on_event_handlers[event_handler_id] = lambda event: handler(event, data)
+
+    def call_event(self, event_handler_id: str, event: Any):
+        if event_handler_id not in self._on_event_handlers:
+            raise ValueError(f"Event handler with id {event_handler_id} does not exist")
+
+        self._on_event_handlers[event_handler_id](event)

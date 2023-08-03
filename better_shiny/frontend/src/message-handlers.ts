@@ -1,6 +1,7 @@
 import {ResponseError, ResponseReRender} from "./client";
 import {innerHTML} from "diffhtml";
 import {populateLazyData} from "./lazy.ts";
+import {reRegisterEvents} from "./events.ts";
 
 export const rerenderHandler = (data: ResponseReRender) => {
     const html = data.html;
@@ -10,6 +11,7 @@ export const rerenderHandler = (data: ResponseReRender) => {
     if (element) {
         innerHTML(element, html);
         void populateLazyData(element);
+        void reRegisterEvents(element);
     }
 };
 

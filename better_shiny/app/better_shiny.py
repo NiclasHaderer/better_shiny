@@ -23,6 +23,7 @@ from ..communication import (
     ResponseError,
     SessionCollector,
     ResponseReRender,
+    RequestEvent,
 )
 
 logger = create_logger(__name__)
@@ -125,6 +126,9 @@ class BetterShiny:
             case RequestReRender():
                 logger.info(f"Received request to re-render {parsed_data.id}")
                 await self._handle_re_render_request(parsed_data, websocket)
+            case RequestEvent():
+                logger.info(f"Received request to handle event {parsed_data.id}")
+                await self._handle_event_request(parsed_data, websocket)
             case _:
                 logger.warning(f"Unknown request type: {parsed_data}")
                 await websocket.send_json(
@@ -133,6 +137,15 @@ class BetterShiny:
                         error=f"Unknown request type: {parsed_data}",
                     ).model_dump()
                 )
+
+    async def _handle_event_request(self, parsed_data: RequestEvent, websocket: WebSocket) -> None:
+        session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
+        # Prepare and teardown the local storage for the dynamic function execution
+        self._local_storage.active_session_id = session_id
+
+        session = self._local_storage.active_session()
+        dynamic_function = session.get_dynamic_function(parsed_data.id)
+        dynamic_function.call_event(parsed_data.event_handler_id, parsed_data.event)
 
     async def _handle_re_render_request(self, parsed_data: RequestReRender, websocket: WebSocket) -> None:
         session_id = websocket.headers.get("cookie", "").split("better_shiny_session_id=")[-1].split(";")[0]
