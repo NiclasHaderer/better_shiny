@@ -118,7 +118,7 @@ class Value(Generic[T], metaclass=_ValueMeta):
         self._on_update_callbacks = []
 
     def __repr__(self) -> str:
-        return f"{ self._name}: {self._value.__repr__()}"
+        return f"{self._name}: {self._value.__repr__()}"
 
 
 def on_update(

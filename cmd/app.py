@@ -1,4 +1,5 @@
 import os
+from threading import Timer
 
 import dominate.util
 import matplotlib.pyplot as plt
@@ -64,6 +65,30 @@ def lazy_reactive_html():
     return container
 
 
+@dynamic()
+def stable_value():
+    stable = reactive.StableValue(0)
+    dynamic_value = reactive.Value(0)
+
+    @reactive.on_mount()
+    def on_mount():
+        stable.set(100_000)
+
+        t = Timer(2, lambda: dynamic_value.set(2))
+        t.daemon = True
+        t.start()
+
+    return div(
+        p(
+            "Stable value: (will not re-render function, even though it was changed) ",
+            "\n",
+            "The new value will only be displayed after the dynamic value has changed and triggered a re-render.",
+            stable(),
+        ),
+        p("Dynamic value: (will re-render function, after it was changed): ", dynamic_value()),
+    )
+
+
 @dynamic(lazy=True)
 def plot():
     # Generating random data for the scatter plot
@@ -112,6 +137,8 @@ def home():
             hr()
             h1("Dataframe")
             dataframe()
+            hr()
+            stable_value()
 
     h = head()
     with h:

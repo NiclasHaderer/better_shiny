@@ -30,6 +30,7 @@ class DynamicFunction:
 
         # Stable values
         self._values: Dict[LineNr, Value] = {}
+        self._stable_values: Dict[LineNr, Value] = {}
         self._values_to_listen_for_changes: Set[Value] = set()
 
         # Local storage
@@ -58,8 +59,14 @@ class DynamicFunction:
 
         for value in self._values.values():
             value.destroy()
-        # TODO call the destroy method of
-        #  1. child dynamic functions
+
+        # Clear all dicts/lists/sets
+        self._on_mount.clear()
+        self._on_unmount.clear()
+        self._values.clear()
+        self._stable_values.clear()
+        self._values_to_listen_for_changes.clear()
+        self._on_event_handlers.clear()
 
     def on_mount(self, fn: Callable[[], Callable[[], Any] | None]) -> None:
         self._on_mount.append(fn)
@@ -67,14 +74,23 @@ class DynamicFunction:
     def on_unmount(self, fn: Callable[[], Any]) -> None:
         self._on_unmount.append(fn)
 
-    def add_value(self, call_line, value: Value) -> None:
+    def add_value(self, call_line: LineNr, value: Value) -> None:
         self._values[call_line] = value
 
-    def has_value(self, call_line) -> bool:
+    def has_value(self, call_line: LineNr) -> bool:
         return call_line in self._values
 
-    def get_value(self, call_line) -> Value:
+    def get_value(self, call_line: LineNr) -> Value:
         return self._values[call_line]
+
+    def add_stable_value(self, call_line: LineNr, value: Value) -> None:
+        self._stable_values[call_line] = value
+
+    def has_stable_value(self, call_line: LineNr) -> bool:
+        return call_line in self._stable_values
+
+    def get_stable_value(self, call_line: LineNr) -> Value:
+        return self._stable_values[call_line]
 
     def listen_for_changes(self, value: Value, invoke_rerender: Callable[[Value], None]) -> None:
         if value in self._values_to_listen_for_changes:
