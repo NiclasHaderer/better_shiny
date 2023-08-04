@@ -159,14 +159,14 @@ def home():
         hr()
         h1("Timer with 0")
         timer()
-        # hr()
-        # h1("Timer with 1")
-        # timer(1)
-        # hr()
-        # h1("Dataframe")
-        # dataframe()
-        # hr()
-        # stable_value()
+        hr()
+        h1("Timer with 1")
+        timer(1)
+        hr()
+        h1("Dataframe")
+        dataframe()
+        hr()
+        stable_value()
 
     return root
 

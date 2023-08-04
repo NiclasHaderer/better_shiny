@@ -1,0 +1,77 @@
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.select-none {
+    user-select: none;
+}
+
+/* Flexbox */
+.flex {
+    display: flex;
+}
+
+.items-center {
+    align-items: center;
+}
+
+
+/* Padding */
+
+.px-1 {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+.py-1 {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.pr-1 {
+    padding-right: 0.25rem;
+}
+
+.pl-1 {
+    padding-left: 0.25rem;
+}
+
+.pt-1 {
+    padding-top: 0.25rem;
+}
+
+.pb-1 {
+    padding-bottom: 0.25rem;
+}
+
+/* Margin */
+
+.mx-1 {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+.my-1 {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.mr-1 {
+    padding-right: 0.25rem;
+}
+
+.ml-1 {
+    padding-left: 0.25rem;
+}
+
+.mt-1 {
+    padding-top: 0.25rem;
+}
+
+.mb-1 {
+    padding-bottom: 0.25rem;
+}

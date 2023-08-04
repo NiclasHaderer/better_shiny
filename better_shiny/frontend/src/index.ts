@@ -1,3 +1,5 @@
+import "./index.css";
+
 import { createClient } from "./client";
 import { errorResponseHandler, rerenderHandler } from "./message-handlers";
 import { retryEvery } from "./utils";

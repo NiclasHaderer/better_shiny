@@ -1,8 +1,7 @@
 from typing import Iterator, Tuple
 
-import dominate.tags
 from dominate import document
-from dominate.tags import meta, script, head as dominate_head
+from dominate.tags import head as dominate_head, link, title, meta, base, dom_tag, script
 from starlette.responses import HTMLResponse
 
 from better_shiny._types import RenderResult
@@ -59,6 +58,7 @@ class DominatorResponse(HTMLResponse):
             # Add mandatory tags
             meta(charset="UTF-8")
             meta(name="viewport", content="width=device-width, initial-scale=1")
+            link(rel="stylesheet", href="/static/style.css")
 
         # Add the better shiny script at the end of the body, to improve initial page load time
         with doc.body:
@@ -67,15 +67,15 @@ class DominatorResponse(HTMLResponse):
         return super().render(doc.render())
 
 
-def get_head_only_elements(root: RenderResult) -> Iterator[dominate.tags.dom_tag]:
+def get_head_only_elements(root: RenderResult) -> Iterator[dom_tag]:
     # Iterate over every element in the body and the children of the body
     for element in root:
         # And find the elements that are head only elements
         # "title", "meta", "link", "base",
-        if type(element) in (dominate.tags.title, dominate.tags.meta, dominate.tags.link, dominate.tags.base):
+        if type(element) in (title, meta, link, base):
             yield element
             # Then remove them from the content of the body
             root.remove(element)
         # If the element has children, we recursively call this function
-        elif isinstance(element, dominate.tags.dom_tag) and len(element.children):
+        elif isinstance(element, dom_tag) and len(element.children):
             yield from get_head_only_elements(element)

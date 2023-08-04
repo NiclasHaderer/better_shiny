@@ -1,3 +1,4 @@
+import uuid
 from typing import TypeVar, Callable, Dict, Any
 
 import dominate.dom_tag
@@ -9,10 +10,10 @@ T = TypeVar("T")
 
 def on(
     event: str,
-    handler: Callable[[T, Dict[str, Any]], None],
+    handler: Callable[[ Dict[str, Any], T], None],
     data: T | None = None,
 ) -> dominate.dom_tag.attr:
-    event_handler_id = f"{event}-{id(handler)}"
+    event_handler_id = f"{event}-{uuid.uuid4()}"
 
     function = local_storage().active_dynamic_function()
     function.register_event_handler(event_handler_id, handler, data)
