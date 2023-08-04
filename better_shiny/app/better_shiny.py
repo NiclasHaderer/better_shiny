@@ -1,9 +1,15 @@
+import asyncio
 import functools
 import os
 import random
+import threading
 import uuid
+from asyncio import AbstractEventLoop
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Tuple, Any, Dict, Coroutine
+
+from dominate.dom_tag import dom_tag
+from dominate.tags import html_tag
 
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
@@ -34,13 +40,15 @@ logger = create_logger(__name__)
 class BetterShiny:
     def __init__(self, *args, **kwargs):
         self.fast_api = FastAPI(*args, **kwargs)
+        self.event_loop: AbstractEventLoop | None = None
+        self.event_loop_thread = None
         # Host static files
         static_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/static"
         self.serve_static_files(static_dir)
 
         # Add middlewares
         self.fast_api.add_middleware(SessionMiddleware, secret_key=random.randbytes(64))
-
+        self.fast_api.on_event("startup")(self._set_event_loop)
         # Register session handler
         self.session_collector = SessionCollector()
         self.fast_api.add_api_websocket_route("/api/better-shiny-communication", self._ws_responder)
@@ -52,16 +60,32 @@ class BetterShiny:
         self._local_storage.app = self
         self._message_sender = MessageSender(self)
 
+    def run(self, *args, **kwargs):
+        import uvicorn
+
+        uvicorn.run(self, *args, **kwargs)
+
+    async def _set_event_loop(self) -> None:
+        self.event_loop = asyncio.get_running_loop()
+        self.event_loop_thread = threading.current_thread()
+        self._message_sender.start(self.event_loop)
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         await self.fast_api(scope, receive, send)
 
     def serve_static_files(self, folder_path: str | Path, route: str = "/static") -> None:
         self.fast_api.mount(route, StaticFiles(directory=folder_path))
 
-    def page(self, path: str) -> Callable[[RenderFunction], Callable[..., DominatorResponse]]:
-        def wrapper(fn: RenderFunction) -> Callable[..., DominatorResponse]:
+    def page(
+        self, path: str
+    ) -> Callable[
+        [Callable[[Any], Any]], Callable[[tuple[Any, ...], dict[str, Any]], Coroutine[Any, Any, DominatorResponse]]
+    ]:
+        def wrapper(
+            fn: RenderFunction,
+        ) -> Callable[[tuple[Any, ...], dict[str, Any]], Coroutine[Any, Any, DominatorResponse]]:
             @functools.wraps(fn)
-            def new_call(*args, **kwargs) -> DominatorResponse:
+            async def new_call(*args, **kwargs) -> DominatorResponse:
                 session_id = str(uuid.uuid4())
                 self.session_collector.add(session_id)
                 self._local_storage.active_session_id = session_id

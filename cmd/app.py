@@ -11,7 +11,7 @@ from better_shiny.app import BetterShiny
 from better_shiny.elements import matplot_element, pandas_element
 from better_shiny.events.handler import on
 from better_shiny.reactive import dynamic
-from better_shiny.themes import theme_picnic, theme_milligram, theme_pico, theme_chota, theme_pure, theme_water
+from better_shiny.themes import theme_picnic, theme_milligram, theme_pico, theme_chota, theme_water
 from better_shiny.utils import set_timeout, set_interval
 
 app = BetterShiny()
@@ -39,12 +39,11 @@ def counter():
     count = reactive.Value(0)
 
     with dominate.util.container() as container:
-        with button("Increase"):
-            on("click", handler=lambda event, _: count.set(count.value_non_reactive + 1))
-
         with button("Decrease"):
             on("click", handler=lambda event, _: count.set(count.value_non_reactive - 1))
 
+        with button("Increase"):
+            on("click", handler=lambda event, _: count.set(count.value_non_reactive + 1))
         p("Count: ", count())
 
     return container
@@ -114,7 +113,7 @@ def dataframe():
 
 @dynamic()
 def theme():
-    current_theme = reactive.Value("picnic")
+    current_theme = reactive.Value("pico")
 
     with dominate.util.container() as container:
         if current_theme() == "chota":
@@ -125,13 +124,12 @@ def theme():
             theme_picnic()
         elif current_theme() == "pico":
             theme_pico()
-        elif current_theme() == "pure":
-            theme_pure()
         elif current_theme() == "water":
             theme_water()
 
         with label("Change theme"):
             with select():
+                attr(autocomplete="off")
                 on("change", lambda event, _: current_theme.set(event["value"]))
                 with option("chota"):
                     attr(selected=current_theme() == "chota")
@@ -141,8 +139,6 @@ def theme():
                     attr(selected=current_theme() == "picnic")
                 with option("pico"):
                     attr(selected=current_theme() == "pico")
-                with option("pure"):
-                    attr(selected=current_theme() == "pure")
                 with option("water"):
                     attr(selected=current_theme() == "water")
 
@@ -173,3 +169,7 @@ def home():
         # stable_value()
 
     return root
+
+
+if __name__ == "__main__":
+    app.run(port=5000)

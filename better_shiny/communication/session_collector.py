@@ -9,7 +9,8 @@ from ..utils import set_interval
 class SessionCollector:
     def __init__(self):
         self._sessions: Dict[SessionId, Session] = {}
-        set_interval(self._remove_unused_sessions, 60)
+        # TODO uncomment this
+        # set_interval(self._remove_unused_sessions, 60)
 
     def _remove_unused_sessions(self) -> None:
         for session_id, session in list(self._sessions.items()):

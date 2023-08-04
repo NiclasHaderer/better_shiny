@@ -1,4 +1,7 @@
+import asyncio
 from typing import Callable
+
+import anyio
 
 from .._local_storage import local_storage
 from ..communication.dynamic_function import DynamicFunction

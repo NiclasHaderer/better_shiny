@@ -5,8 +5,10 @@ import threading
 from typing import Callable, TypeVar, Any, List, Generic
 
 from .._local_storage import local_storage
+from ..utils import create_logger
 
 T = TypeVar("T")
+logger = create_logger(__name__)
 
 
 class ValueSubscription:
@@ -81,6 +83,9 @@ class Value(Generic[T], metaclass=_ValueMeta):
 
     def set(self, value: T) -> None:
         if self._thread != threading.current_thread():
+            logger.error("Value was created in thread %s", self._thread)
+            logger.error("Value was set in thread %s", threading.current_thread())
+            logger.error("Do not set the value from a different thread than it was created in")
             raise ValueError("Value can only be set from the same thread it was created in")
 
         if self._value == value:

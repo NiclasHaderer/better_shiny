@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import AbstractEventLoop
 from typing import Tuple, TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -16,10 +17,9 @@ logger = create_logger(__name__)
 class MessageSender:
     def __init__(self, app: "BetterShiny"):
         self._messages_to_send: asyncio.Queue[Tuple[WebSocket, BaseModel]] = asyncio.Queue()
-        self._register_message_sender()
 
-    def _register_message_sender(self):
-        event_loop = asyncio.get_event_loop()
+    def start(self, event_loop: AbstractEventLoop) -> None:
+        # Run the _message_sender in the event loop. Do not wait for it to finish.
         event_loop.create_task(self._message_sender())
 
     async def _message_sender(self):

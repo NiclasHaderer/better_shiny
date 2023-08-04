@@ -23,7 +23,6 @@ class LocalStorage:
 
     @active_session_id.setter
     def active_session_id(self, value: str | None):
-        logger.info(f"Setting active session id to {value}")
         self._active_session_id = value
 
     @property
@@ -32,7 +31,6 @@ class LocalStorage:
 
     @active_dynamic_function_id.setter
     def active_dynamic_function_id(self, value: str | None):
-        logger.info(f"Setting active dynamic function id to {value}")
         self._active_dynamic_function_id = value
 
     def active_session(self) -> "Session":
