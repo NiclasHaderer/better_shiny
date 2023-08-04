@@ -13,8 +13,13 @@ class _ValueMeta(type):
         # Get the line of code where the value was created at.
         back = inspect.currentframe().f_back
 
+        # The value was called with an explicit generic type, so we have to go back one more frame
+        if back.f_globals.get("__name__") == "typing":
+            back = back.f_back
+
         # Check if the function one back has a property called "is_reactive", for now Values can only be used in
         # reactive functions
+
         calling_function = back.f_globals[back.f_code.co_name]
         if not hasattr(calling_function, "is_dynamic_function"):
             raise ValueError("StableValue can only be used in a reactive function")

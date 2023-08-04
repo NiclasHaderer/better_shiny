@@ -1,10 +1,6 @@
-import asyncio
 from typing import Callable
 
-import anyio
-
 from .._local_storage import local_storage
-from ..communication.dynamic_function import DynamicFunction
 
 
 def on_mount() -> Callable[[Callable[[], None]], Callable[[], None]]:
@@ -16,7 +12,7 @@ def on_mount() -> Callable[[Callable[[], None]], Callable[[], None]]:
 
     def wrapper(fn: Callable[[], None]) -> Callable[[], None]:
         def inner() -> None:
-            fn()
+            return fn()
 
         dynamic_function = local.active_dynamic_function()
         if dynamic_function.is_first_call:

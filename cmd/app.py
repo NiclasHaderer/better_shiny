@@ -1,16 +1,15 @@
 import os
 
-import dominate.util
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dominate.tags import *
+from dominate.util import container
 
 from better_shiny import reactive
 from better_shiny.app import BetterShiny
 from better_shiny.elements import matplot_element, pandas_element
-from better_shiny.events.handler import on
-from better_shiny.reactive import dynamic
+from better_shiny.reactive import dynamic, on
 from better_shiny.themes import theme_picnic, theme_milligram, theme_pico, theme_chota, theme_water
 from better_shiny.utils import set_timeout, set_interval
 
@@ -38,26 +37,27 @@ def timer(start=0):
 def counter():
     count = reactive.Value(0)
 
-    with dominate.util.container() as container:
+    with container() as c:
         with button("Decrease"):
             on("click", handler=lambda event, _: count.set(count.value_non_reactive - 1))
 
         with button("Increase"):
             on("click", handler=lambda event, _: count.set(count.value_non_reactive + 1))
+
         p("Count: ", count())
 
-    return container
+    return c
 
 
 @dynamic(lazy=True)
 def lazy_reactive_html():
-    with dominate.util.container() as container:
+    with container() as c:
         plot()
         plot()
         timer(10)
         p("Hello World" * 10)
 
-    return container
+    return c
 
 
 @dynamic()
@@ -115,7 +115,7 @@ def dataframe():
 def theme():
     current_theme = reactive.Value("pico")
 
-    with dominate.util.container() as container:
+    with container() as c:
         if current_theme() == "chota":
             theme_chota()
         elif current_theme() == "milligram":
@@ -142,12 +142,12 @@ def theme():
                 with option("water"):
                     attr(selected=current_theme() == "water")
 
-    return container
+    return c
 
 
 @app.page("/")
 def home():
-    with dominate.util.container() as root:
+    with container() as root:
         title("My Website")
         theme()
 

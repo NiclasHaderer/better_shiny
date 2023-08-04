@@ -24,6 +24,10 @@ class _ValueMeta(type):
         # Get the line of code where the value was created at.
         back = inspect.currentframe().f_back
 
+        # The value was called with an explicit generic type, so we have to go back one more frame
+        if back.f_globals.get("__name__") == "typing":
+            back = back.f_back
+
         # Check if the function one back has a property called "is_reactive", for now Values can only be used in
         # reactive functions
         calling_function = back.f_globals[back.f_code.co_name]
@@ -41,28 +45,6 @@ class _ValueMeta(type):
 
 
 class Value(Generic[T], metaclass=_ValueMeta):
-    """
-    def __new__(cls, *args, **kwargs):
-        # Get the line of code where the value was created at.
-        # This is used to track whether the value is used in a reactive function, and if so, allows me to return the
-        # original value instead of a new instance, making this value stable.
-        back = inspect.currentframe().f_back
-
-        # Check if the function one back has a property called "is_reactive", for now Values can only be used in
-        # reactive functions
-        calling_function = back.f_globals[back.f_code.co_name]
-        if not hasattr(calling_function, "is_dynamic_function"):
-            raise ValueError("Value can only be used in a reactive function")
-
-        call_line = back.f_lineno
-
-        dynamic_function = local_storage().active_dynamic_function()
-        if not dynamic_function.has_value(call_line):
-            self = super().__new__(cls)
-            dynamic_function.add_value(call_line, self)
-
-        return dynamic_function.get_value(call_line)
-    """
 
     def __init__(self, value: T, name: str = ""):
         self._value = value

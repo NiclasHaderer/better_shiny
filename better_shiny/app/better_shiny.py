@@ -6,10 +6,7 @@ import threading
 import uuid
 from asyncio import AbstractEventLoop
 from pathlib import Path
-from typing import Callable, Tuple, Any, Dict, Coroutine
-
-from dominate.dom_tag import dom_tag
-from dominate.tags import html_tag
+from typing import Callable, Any, Coroutine
 
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
@@ -69,6 +66,7 @@ class BetterShiny:
         self.event_loop = asyncio.get_running_loop()
         self.event_loop_thread = threading.current_thread()
         self._message_sender.start(self.event_loop)
+        self.session_collector.start()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         await self.fast_api(scope, receive, send)
@@ -77,12 +75,12 @@ class BetterShiny:
         self.fast_api.mount(route, StaticFiles(directory=folder_path))
 
     def page(
-        self, path: str
+            self, path: str
     ) -> Callable[
         [Callable[[Any], Any]], Callable[[tuple[Any, ...], dict[str, Any]], Coroutine[Any, Any, DominatorResponse]]
     ]:
         def wrapper(
-            fn: RenderFunction,
+                fn: RenderFunction,
         ) -> Callable[[tuple[Any, ...], dict[str, Any]], Coroutine[Any, Any, DominatorResponse]]:
             @functools.wraps(fn)
             async def new_call(*args, **kwargs) -> DominatorResponse:
