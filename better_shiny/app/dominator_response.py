@@ -1,6 +1,7 @@
 from typing import Iterator, Tuple
 
 from dominate import document
+from dominate.dom_tag import attr
 from dominate.tags import head as dominate_head, link, title, meta, base, dom_tag, script
 from starlette.responses import HTMLResponse
 

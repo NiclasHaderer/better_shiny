@@ -12,6 +12,7 @@ from better_shiny.elements import matplot_element, pandas_element
 from better_shiny.reactive import dynamic, on
 from better_shiny.themes import theme_picnic, theme_milligram, theme_pico, theme_chota, theme_water
 from better_shiny.utils import set_timeout, set_interval
+from ionic import ionic
 
 app = BetterShiny()
 
@@ -127,8 +128,9 @@ def theme():
         elif current_theme() == "water":
             theme_water()
 
-        with label("Change theme"):
+        with label("Theme"):
             with select():
+                attr(style="display: inline-block; width: auto;")
                 attr(autocomplete="off")
                 on("change", lambda event, _: current_theme.set(event["value"]))
                 with option("chota"):
@@ -149,8 +151,12 @@ def theme():
 def home():
     with container() as root:
         title("My Website")
+        h1("Better Shiny")
+        span("View the ionic demo")
+        a("here", href="/ionic")
+        hr()
         theme()
-
+        hr()
         h1("Counter")
         counter()
         hr()
@@ -170,6 +176,8 @@ def home():
 
     return root
 
+
+app.page("/ionic")(ionic)
 
 if __name__ == "__main__":
     app.run(port=5000)
