@@ -1,23 +1,13 @@
-import os
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 from dominate import document
 from dominate.tags import *
-from dominate.util import container, text, raw
+from dominate.util import text
 
-from better_shiny import reactive
-from better_shiny.app import BetterShiny
-from better_shiny.elements import matplot_element, pandas_element
-from better_shiny.reactive import dynamic, on
-from better_shiny.themes import theme_picnic, theme_milligram, theme_pico, theme_chota, theme_water
 from better_shiny.themes.ionic import *
-from better_shiny.utils import set_timeout, set_interval
+
 
 def ionic():
     with document() as root:
-        attr(dir="ltr", lang="en")
+        attr(dir="ltr", lang="en", mode="ios")
         title("Ionic")
         theme_ionic()
         # ion_header
@@ -29,7 +19,8 @@ def ionic():
         with ion_content():
             # ion_card
             with ion_card():
-                img(src="https://picsum.photos/536/354", alt="Card Image", width="100%" , height="400px" , style="object-fit: cover;")
+                img(src="https://picsum.photos/1500/200?blur=10", alt="Card Image", width="100%", height="400px",
+                    style="object-fit: cover;")
                 # ion_card_header
                 with ion_card_header():
                     ion_card_title("Welcome to the Demo!")
@@ -50,16 +41,57 @@ def ionic():
                         ion_button("Solid", fill="solid")
 
                     with ion_item():
-                        ion_checkbox("I agree to the terms and conditions")
-                    with ion_item():
-                        ion_toggle("Enable Notifications", enableOnOffLabels=True)
-
-                    with ion_item():
                         ion_chip("Default")
                         ion_chip("Disabled", disabled=True)
                         ion_chip("Outline", outline=True)
+
                     with ion_item():
-                        ion_datetime("Date of birth")
+                        span("Icons:")
+                        ion_icon(name="basketball-outline")
+                        ion_icon(name="bicycle-outline")
+                        ion_icon(name="boat-outline")
+                        ion_icon(name="body-outline")
+                        ion_icon(name="bonfire-outline")
+                        ion_icon(name="book-outline")
+                        ion_icon(name="bookmark-outline")
+                        ion_icon(name="bookmarks-outline")
+
+
+
+            with ion_card():
+                with ion_card_header():
+                    ion_card_title("Inputs")
+
+                with ion_card_content():
+                    # ion-item with ion-input (Default Input)
+                    with ion_item():
+                        ion_input(label="Default Input", placeholder="Enter text")
+
+                    # ion-item with ion-select
+                    with ion_item():
+                        with ion_select(label="Select", placeholder="Make a Selection"):
+                            ion_select_option("No Game Console", value="")
+                            ion_select_option("NES", value="nes")
+                            ion_select_option("Nintendo64", value="n64")
+                            ion_select_option("PlayStation", value="ps")
+                            ion_select_option("Sega Genesis", value="genesis")
+                            ion_select_option("Sega Saturn", value="saturn")
+                            ion_select_option("SNES", value="snes")
+
+                    # ion-item with ion-toggle
+                    with ion_item():
+                        ion_toggle("Toggle")
+
+                    # ion-item with ion-checkbox
+                    with ion_item():
+                        ion_checkbox("Checkbox")
+
+                    # ion-item with ion-range
+                    with ion_item():
+                        with ion_range(label_placement="start"):
+                            div("Range", slot="label")
+
+            ion_datetime("Date of birth")
 
             # ion_list
             with ion_list():
