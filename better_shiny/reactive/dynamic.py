@@ -5,6 +5,7 @@ from dominate.tags import div
 
 from .._local_storage import local_storage
 from .._types import RenderResult, RenderFunction
+from ..utils.logging import log_duration
 
 T = TypeVar("T", bound=RenderFunction)
 
@@ -25,7 +26,7 @@ def dynamic(lazy: bool = False) -> Callable[[T], T]:
             _function_call_counter[fn_id] += 1
             local.active_dynamic_function_id = dynamic_function_id
 
-            session.create_dynamic_function(dynamic_function_id, args, kwargs, fn)
+            session.create_dynamic_function(dynamic_function_id, args, kwargs, fn, fn.__name__)
 
             outlet = div(id=dynamic_function_id)
             with outlet:
@@ -33,7 +34,7 @@ def dynamic(lazy: bool = False) -> Callable[[T], T]:
                 if lazy:
                     attr(data_lazy="true")
                 else:
-                    session.get_dynamic_function(dynamic_function_id)()
+                    log_duration(session.get_dynamic_function(dynamic_function_id),  fn.__name__)()
             local.active_dynamic_function_id = None
             return outlet
 

@@ -15,12 +15,14 @@ class DynamicFunction:
         dynamic_function_id: DynamicFunctionId,
         args: tuple,
         kwargs: dict,
+            name: str
     ):
         # Function arguments
         self._args = args
         self._kwargs = kwargs
         self._func = func
         self._dynamic_function_id = dynamic_function_id
+        self._name = name
 
         # Lifecycle hooks
         self._on_mount: List[Callable[[], Callable[[], Any] | None]] = []
@@ -35,6 +37,10 @@ class DynamicFunction:
 
         # Local storage
         self._local_storage = local_storage()
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def __call__(self) -> RenderResult:
         self._on_event_handlers.clear()

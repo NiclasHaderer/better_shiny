@@ -48,6 +48,7 @@ class Session:
         args: tuple,
         kwargs: dict,
         func: RenderFunction,
+            name: str
     ) -> None:
         if dynamic_function_id in self._dynamic_functions:
             raise ValueError(
@@ -55,7 +56,7 @@ class Session:
             )
 
         self._dynamic_functions[dynamic_function_id] = DynamicFunction(
-            args=args, kwargs=kwargs, dynamic_function_id=dynamic_function_id, func=func
+            args=args, kwargs=kwargs, dynamic_function_id=dynamic_function_id, func=func, name=name
         )
 
     def rerender_on_change(self, dynamic_function_id: DynamicFunctionId, value: Value) -> None:
