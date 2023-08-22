@@ -8,6 +8,8 @@ from asyncio import AbstractEventLoop
 from pathlib import Path
 from typing import Callable, Any, Coroutine
 
+from dominate.dom_tag import dom_tag
+from dominate.tags import html_tag
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
@@ -186,7 +188,7 @@ class BetterShiny:
         self._local_storage.active_session_id = session_id
         self._local_storage.active_dynamic_function_id = dynamic_function_id
         dynamic_function = self._local_storage.active_dynamic_function()
-        html = dynamic_function()
+        html = log_duration(dynamic_function, f"Re-rendering {dynamic_function.name}")()
         self._local_storage.active_dynamic_function_id = None
         self._local_storage.active_session_id = None
 

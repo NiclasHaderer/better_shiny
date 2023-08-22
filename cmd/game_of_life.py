@@ -22,7 +22,7 @@ def copy_grid(grid: Grid) -> Grid:
     return [row[:] for row in grid]
 
 
-def get_next_generation(grid):
+def calculate_next_generation(grid):
     rows = len(grid)
     cols = len(grid[0])
 
@@ -61,7 +61,7 @@ def get_next_generation(grid):
 def grid_outlet(grid: reactive.Value[Grid]):
     def toggle_at(_: any, col_row: tuple[int, int]):
         row, col = col_row
-        grid_copy = copy_grid(grid())
+        grid_copy = copy_grid(grid.get())
         grid_copy[row][col] = 1 - grid_copy[row][col]
         grid.set(grid_copy)
 
@@ -86,27 +86,27 @@ def start_pause_btn(grid: reactive.Value[Grid]):
 
     @reactive.on_update(has_started)
     def on_has_started_change(_: reactive.Value[bool]):
-        if has_started.value_non_reactive:
-            task = set_interval(lambda: grid.set(get_next_generation(grid.value_non_reactive)), 0.01)
+        if has_started.get():
+            task = set_interval(lambda: grid.set(calculate_next_generation(grid.get())), 0.01)
             timer.set(task)
         else:
-            task = timer()
+            task = timer.get()
             if task:
                 task.cancel()
 
-    with button():
-        on("click", lambda _, __: has_started.set(not has_started.value_non_reactive))
+    with button() as click_button:
+        on("click", lambda _, __: has_started.set(not has_started.get()))
         if has_started():
             text("Pause")
         else:
             text("Start")
 
-    return has_started
+    return click_button
 
 
 @dynamic()
 def _index():
-    grid = reactive.Value(create_grid(20, 20))
+    grid = reactive.Value(create_grid(80, 80))
     with container() as c:
         start_pause_btn(grid)
         grid_outlet(grid)

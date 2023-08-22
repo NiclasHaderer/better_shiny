@@ -22,13 +22,16 @@ def create_logger(name: str) -> logging.Logger:
     return logger
 
 
+_logger = create_logger(__name__)
+
+
 def log_duration(
         function: Callable[..., Any],
         thing: str | None = None,
         logger: logging.Logger | None = None,
 ) -> Callable[..., Any]:
     if logger is None:
-        logger = create_logger(function.__module__)
+        logger = _logger
 
     @functools.wraps(function)
     def wrapper(*args, **kwargs):

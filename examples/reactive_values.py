@@ -19,12 +19,12 @@ def counter():
         # Create a button that will decrease the count by 1 when clicked
         with button("Decrease"):
             # Subscribe to the button's click event. If the button is clicked, the counter will be decreased by 1.
-            # Make sure that you get the value using the value_non_reactive property.
-            on("click", handler=lambda event, _: count.set(count.value_non_reactive - 1))
+            # Make sure that you get the value using the get() function.
+            on("click", handler=lambda event, _: count.set(count.get() - 1))
 
         # Create a button that will increase the count by 1 when clicked
         with button("Increase"):
-            on("click", handler=lambda event, _: count.set(count.value_non_reactive + 1))
+            on("click", handler=lambda event, _: count.set(count.get() + 1))
 
         # Display the current count
         # You can access a reactive value by calling it like a function.

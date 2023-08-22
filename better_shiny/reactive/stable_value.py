@@ -47,11 +47,10 @@ class StableValue(Generic[T], metaclass=_ValueMeta):
         self._value = value
         self._name = name
 
-    def __call__(self) -> T:
+    def get(self) -> T:
         return self._value
 
-    @property
-    def old_value(self) -> T | None:
+    def get_old(self) -> T | None:
         return self._old_value
 
     def set(self, value: T) -> None:

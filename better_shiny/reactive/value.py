@@ -55,13 +55,11 @@ class Value(Generic[T], metaclass=_ValueMeta):
         self._name = name
         self._thread = threading.current_thread()
 
-    @property
-    def old_value_non_reactive(self) -> T | None:
-        return self._old_value
-
-    @property
-    def value_non_reactive(self) -> T:
+    def get(self) -> T:
         return self._value
+
+    def get_old(self) -> T | None:
+        return self._old_value
 
     def set(self, value: T) -> None:
         if self._thread != threading.current_thread():
@@ -88,17 +86,38 @@ class Value(Generic[T], metaclass=_ValueMeta):
             if destroy_cb:
                 self._on_destroy_callbacks.append(destroy_cb)
 
+    def __call__(self) -> T:
+        if self._was_called_in_dynamic_function():
+            session = self._local_storage.active_session()
+            session.rerender_on_change(self._local_storage.active_dynamic_function_id, self)
+            return self._value
+        else:
+            logger.error(
+                "It looks like you are trying to use a Value outside of a reactive function. "
+                "Try using .get() instead of calling the value. ",
+                stack_info=True,
+            )
+            return self._value
+
+    @staticmethod
+    def _was_called_in_dynamic_function() -> bool:
+        back = inspect.currentframe().f_back.f_back
+        called_function_name = back.f_code.co_name
+        globs = back.f_globals
+
+        if called_function_name not in globs:
+            # The get function was called in a function that was defined inside a function.
+            # By definition, these functions cannot be dynamic functions
+            return False
+        calling_function = globs[called_function_name]
+        return hasattr(calling_function, "is_dynamic_function")
+
     def on_update(self, cb: Callable[[Value[T]], DestroyCb | None]) -> ValueSubscription:
         """
         This function is called when the value is updated
         """
         self._on_update_callbacks.append(cb)
         return ValueSubscription(lambda: self._on_update_callbacks.remove(cb))
-
-    def __call__(self) -> T:
-        session = self._local_storage.active_session()
-        session.rerender_on_change(self._local_storage.active_dynamic_function_id, self)
-        return self._value
 
     def destroy(self) -> None:
         for cb in self._on_destroy_callbacks:
@@ -111,7 +130,7 @@ class Value(Generic[T], metaclass=_ValueMeta):
 
 
 def on_update(
-    value: Value[T],
+        value: Value[T],
 ) -> Callable[[Callable[[Value[T]], DestroyCb]], Callable[[Value[T]], DestroyCb]]:
     def wrapper(fn: Callable[[Value[T]], DestroyCb]) -> Callable[[Value[T]], DestroyCb]:
         def inner(_: Value[T]) -> DestroyCb:

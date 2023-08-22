@@ -55,12 +55,12 @@ def counter():
         # Create a button that will decrease the count by 1 when clicked
         with button("Decrease"):
             # Subscribe to the button's click event. If the button is clicked, the counter will be decreased by 1.
-            # Make sure that you get the value using the value_non_reactive property.
-            on("click", handler=lambda event, _: count.set(count.value_non_reactive - 1))
+            # Make sure that you get the value using the get() function.
+            on("click", handler=lambda event, _: count.set(count.get() - 1))
 
         # Create a button that will increase the count by 1 when clicked
         with button("Increase"):
-            on("click", handler=lambda event, _: count.set(count.value_non_reactive + 1))
+            on("click", handler=lambda event, _: count.set(count.get() + 1))
 
         # Display the current count
         # You can access a reactive value by calling it like a function.
@@ -101,17 +101,17 @@ def some_component():
         with button("Increase"):
             # As you can see, the value is updated every time the button is clicked.
             # This is because the value is reactive.
-            on("click", handler=lambda event, _: value.set(value.value_non_reactive + 1))
+            on("click", handler=lambda event, _: value.set(value.get() + 1))
 
         with button("Increase stable"):
             # The stable value will not trigger a UI update.
             # Only after the value is changed, and the changing of the value triggers a UI update, the change
             # in the stable value will also be reflected in the ui
             # in the stable value will also be reflected in the ui
-            on("click", handler=lambda event, _: stable_value.set(stable_value() + 1))
+            on("click", handler=lambda event, _: stable_value.set(stable_value.get() + 1))
 
         p("Value: ", value())
-        p("Stable value: ", stable_value())
+        p("Stable value: ", stable_value.get())
 
     return c
 
@@ -198,34 +198,35 @@ def countdown(duration=0):
     @reactive.on_mount()
     def on_mount():
         # Start an interval that will increase the count by 1 every second
-        _interval = set_interval(lambda: count.set(count.value_non_reactive + 1), 1)
+        task = set_interval(lambda: count.set(count.get() + 1), 1)
 
         # Save the interval so that we can cancel it later
-        interval.set(_interval)
+        interval.set(task)
 
     @reactive.on_unmount()
     def on_unmount():
         # Cancel the interval when the component is unmounted
-        _interval = interval()
-        if _interval is not None:
-            _interval.cancel()
+        task = interval.get()
+        if task is not None:
+            task.cancel()
 
     @reactive.on_update(count)
     def on_count_change(_):
         # When the count changes, update the count_backwards value
-        count_backwards.set(duration - count.value_non_reactive)
+        count_backwards.set(duration - count.get())
 
     # If the countdown is finished, cancel the interval
-    if count_backwards.value_non_reactive <= 0:
-        _interval = interval()
+    if count_backwards.get() <= 0:
+        _interval = interval.get()
         if _interval is not None:
             _interval.cancel()
 
-    if count_backwards.value_non_reactive <= 0:
+    if count_backwards.get() <= 0:
         # This function will be called when the restart button is clicked
         def restart(event: Dict[str, Any], data: Any):
+            print(event, data)
             count.set(0)
-            interval.set(set_interval(lambda: count.set(count.value_non_reactive + 1), 1))
+            interval.set(set_interval(lambda: count.set(count.get() + 1), 1))
 
         with p("Countdown finished") as paragraph:
             with button("Restart"):
